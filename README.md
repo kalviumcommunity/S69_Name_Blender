@@ -16,9 +16,4 @@ The Name Blender is a playful website where users input two person names, and it
 - Provide users with a random pair of persons to blend if they’re feeling indecisive.
 
 4.Share Option
-
-
-- Allow users to share the results on social media with a funny caption.
-
-- Allow users to share the results on social media with a funny caption.
-
+- Allow users to share the results with friends.
