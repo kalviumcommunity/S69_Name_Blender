@@ -1,0 +1,19 @@
+{
+  "name": "s69_name_blender",
+  "version": "1.0.0",
+  "description": "The Name Blender is a playful website where users input two person names, and it blends the names to create a silly hybrid name. Along with the name, the site generates a fake biography that combines traits, accomplishments, or quirks of the two persons.",
+  "main": "backend/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Venkateswara",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
