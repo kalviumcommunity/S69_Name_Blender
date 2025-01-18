@@ -17,3 +17,7 @@ The Name Blender is a playful website where users input two person names, and it
 
 4.Share Option
 - Allow users to share the results with friends.
+
+### Deployment Link
+
+https://dashboard.render.com/web/srv-cu51ehpu0jms73fd6b4g/settings
