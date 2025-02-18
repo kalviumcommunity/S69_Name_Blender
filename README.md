@@ -20,4 +20,9 @@ The Name Blender is a playful website where users input two person names, and it
 
 ### Deployment Link
 
-https://dashboard.render.com/web/srv-cu51ehpu0jms73fd6b4g/settings
+https://s69-name-blender.onrender.com
+
+
+### Frontend Deployment Link
+
+https://nameblender-f8e199.netlify.app/
