@@ -6,12 +6,14 @@ function LandingPage() {
   return (
     <div className={`${darkMode ? "bg-black text-white" : "bg-white text-black"} flex flex-col items-center justify-center min-h-screen p-6 transition-colors duration-300`}>
       {/* 🌗 Toggle Button */}
-    <div className="fixed top-4 right-10"><button
-        onClick={() => setDarkMode(!darkMode)}
-        className="bg-gray-800 text-white dark:bg-white dark:text-black px-3 py-2 rounded-full shadow-md transition"
-      >
-        {darkMode ? "🌞 Light Mode" : "🌙 Dark Mode"}
-      </button></div>  
+      <div className="fixed top-4 right-10">
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="bg-gray-800 text-white dark:bg-white dark:text-black px-3 py-2 rounded-full shadow-md transition"
+        >
+          {darkMode ? "🌞 Light Mode" : "🌙 Dark Mode"}
+        </button>
+      </div>
 
       {/* 🌟 Header */}
       <header className="text-center">
@@ -34,6 +36,14 @@ function LandingPage() {
         <h2 className="text-2xl font-bold">About Name Blender</h2>
         <p className="text-md mt-2">
           Name Blender is a fun tool that combines two names to generate a unique, blended name. Perfect for friends, couples, or just for fun!
+        </p>
+      </section>
+
+      {/* 📖 About Us Section */}
+      <section className={`mt-12 p-6 rounded-2xl shadow-lg max-w-lg text-center transition-all duration-300 ${darkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-900"}`}>
+        <h2 className="text-2xl font-bold">About Us</h2>
+        <p className="text-md mt-2">
+          We are a team of developers passionate about creativity and technology. Our mission is to bring fun and engaging experiences through simple yet powerful tools.
         </p>
       </section>
 
