@@ -1,16 +1,23 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import LandingPage from "./pages/LandingPage";
+import React from 'react'
+import LandingPage from './pages/LandingPage'
+import './App.css'
+import {BrowserRouter, Routes, Route} from 'react-router-dom'
+import Data from './pages/data'
 
 function App() {
+
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        {/* Add more routes here if needed */}
-      </Routes>
-    </Router>
-  );
+        <Route path='/landing' element={<LandingPage/>}></Route>
+        {/* <Navbar/> */}
+        <Route path='/' element={<Data/>} ></Route>
+        {/* <Home/>  */}
+        </Routes>
+      
+      </BrowserRouter>
+    
+  )
 }
 
-export default App;
+export default App

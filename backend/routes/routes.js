@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const itemController = require('../controllers/itemController');
+const User = require('../models/User');
 
-router.post('/items', itemController.createItem);
-router.get('/items/:id', itemController.getItem);
-router.put('/items/:id', itemController.updateItem);
-router.delete('/items/:id', itemController.deleteItem);
+router.post('/create',User.create);
+router.get('/read',User.read)
+router.put('/update',User.update)
+router.delete('/delete',User.delete)
 
 module.exports = router;
