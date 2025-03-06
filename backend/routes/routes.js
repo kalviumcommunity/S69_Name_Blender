@@ -3,8 +3,8 @@ const router = express.Router();
 const User = require('../models/User');
 
 router.post('/create',User.create);
-router.get('/read',User.read)
-router.put('/update',User.update)
-router.delete('/delete',User.delete)
+router.get('/users/read/:email?',User.read)
+router.put('/users/update/:email?',User.update)
+router.delete('/users/delete/:email?',User.delete)
 
 module.exports = router;

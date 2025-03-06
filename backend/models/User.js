@@ -2,9 +2,9 @@ const User = require("./schema");
 
 exports.create = async (req, res) => {
     try {
-        const { name, email } = req.body;
-        if (!email || !name) {
-            return res.status(400).json({ message: "Enter name and email" });
+        const { name, email, password } = req.body;
+        if (!email || !name || !password) {
+            return res.status(400).json({ message: "Enter name and email and password" });
         }
 
 
@@ -14,7 +14,7 @@ exports.create = async (req, res) => {
         }
 
         
-        const newUser = new User({ name, email });
+        const newUser = new User({ name, email, password });
         await newUser.save();
         res.status(201).json(newUser);
     } catch (error) {
@@ -24,6 +24,16 @@ exports.create = async (req, res) => {
 
 exports.read = async (req, res) => {
     try {
+        const { email } = req.params; 
+
+        if (email) {
+            const user = await User.findOne({ email });
+            if (!user) {
+                return res.status(404).json({ message: "User not found." });
+            }
+            return res.status(200).json(user);
+        }
+
         const users = await User.find();
         res.status(200).json(users);
     } catch (error) {
@@ -31,14 +41,17 @@ exports.read = async (req, res) => {
     }
 };
 
+
+
 exports.update = async (req, res) => {
     try {
-        const { email } = req.query;
-        const { name, em } = req.body;
+        const { email } = req.params;
+        const { name } = req.body;
+
 
         const updatedUser = await User.findOneAndUpdate(
             { email },
-            { name: name || undefined, email: em || email },
+            { name: name || undefined},
             { new: true, runValidators: true } 
         );
 
@@ -54,7 +67,7 @@ exports.update = async (req, res) => {
 
 exports.delete = async (req, res) => {
     try {
-        const { email } = req.query;
+        const { email } = req.params;
         const deletedUser = await User.findOneAndDelete({ email });
 
         if (!deletedUser) {
