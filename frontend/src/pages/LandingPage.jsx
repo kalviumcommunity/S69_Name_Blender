@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 function LandingPage() {
   const [darkMode, setDarkMode] = useState(true); // Default to dark mode
@@ -26,9 +27,9 @@ function LandingPage() {
         <p className="text-xl font-light max-w-lg">
           Ever wondered what your name would look like blended with someone else’s? Try it out and discover fun, creative name fusions!
         </p>
-        <button className="mt-6 bg-white text-purple-700 font-bold py-3 px-6 rounded-full text-lg hover:bg-purple-200 transition">
+    <Link to="/signup"> <button className="mt-6 bg-white text-purple-700 font-bold py-3 px-6 rounded-full text-lg hover:bg-purple-200 transition">
           🚀 Try Now
-        </button>
+        </button></Link>   
       </div>
 
       {/* 📝 About Section */}
