@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "../App.css"
+import { Link } from "react-router-dom";
 
 function Data() {
     const [user, setUser] = useState([]);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/read") // Fix API URL if needed
+        fetch("http://localhost:3000/api/users/read") // Fix API URL if needed
             .then((res) => {
                 if (!res.ok) {
                     throw new Error(`HTTP error! status: ${res.status}`);
@@ -30,6 +31,11 @@ function Data() {
                         
                             <h1 className="text-3xl">{item.name}</h1>
                             <h3>{item.email}</h3>
+                            <span>
+                           <Link to={`/update/${item.email}`}><button className="bg-amber-300 border-2 rounded-md p-1">Edit Name</button></Link> 
+                            <span className="p-2"></span>
+                            <Link to={`/delete/${item.email}`}><button className="bg-red-400 border-2 rounded-md p-1">Delete</button></Link>
+                            </span>
                     
                         
                     </div>
