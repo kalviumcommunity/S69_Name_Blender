@@ -1,31 +1,24 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react"; // 👁️ Icons for show/hide password
+import { Eye, EyeOff } from "lucide-react";
 
-function SignUpPage() {
-  const navigate = useNavigate();
-
+function LoginPage() {
   const [darkMode, setDarkMode] = useState(true);
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // 👁️ Toggle for password
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // 👁️ Toggle for confirm password
+  const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const validateForm = () => {
     let errors = {};
-    if (formData.name.trim().length < 8) {
-      errors.name = "Name must be at least 8 characters long.";
-    }
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = "Invalid email format.";
     }
     if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters long.";
-    }
-    if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = "Passwords do not match.";
+      errors.password = "Password must be at least 6 characters.";
     }
     setErrors(errors);
     return Object.keys(errors).length === 0;
@@ -44,28 +37,32 @@ function SignUpPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/register", { // Updated to /api/register
+      const response = await fetch("http://localhost:3000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formData.name, email: formData.email, password: formData.password }), // Only send necessary fields
+        body: JSON.stringify(formData), // Already { email, password }
       });
 
       const data = await response.json();
+      console.log("Login response:", data); // Debug log
 
       if (response.ok) {
-        setMessage("🎉 Signup successful! Redirecting...");
-        setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+        setMessage("✨ Login successful!");
+        localStorage.setItem("user", JSON.stringify(data.user || {}));
+        setFormData({ email: "", password: "" });
 
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => {
+          navigate("/homePage");
+        }, 1000);
       } else {
-        setMessage(data.message || "Something went wrong. Please try again.");
+        setMessage(data.message || "Invalid credentials. Try again.");
       }
     } catch (error) {
-      setMessage("Error connecting to server. Please try again later.");
-      console.error("Signup error:", error);
-    } finally {
-      setLoading(false);
+      setMessage("🌋 Server error. Please try again later.");
+      console.error("Login error:", error);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -74,13 +71,11 @@ function SignUpPage() {
         darkMode ? "bg-gradient-to-br from-gray-900 via-black to-purple-950" : "bg-gradient-to-br from-white via-gray-100 to-purple-100"
       } flex flex-col items-center justify-center min-h-screen p-6 transition-all duration-500 relative overflow-hidden`}
     >
-      {/* 🌌 Subtle Animated Background Particles */}
       <div className="absolute inset-0 pointer-events-none">
         <div className={`w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse absolute ${darkMode ? "top-10 left-10" : "top-20 right-20"}`}></div>
         <div className={`w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse absolute ${darkMode ? "bottom-20 right-20" : "bottom-10 left-10"} delay-1000`}></div>
       </div>
 
-      {/* 🌗 Dark Mode Toggle */}
       <div className="fixed top-4 right-10 z-20">
         <button
           onClick={() => setDarkMode(!darkMode)}
@@ -94,29 +89,15 @@ function SignUpPage() {
         </button>
       </div>
 
-      {/* 📝 Signup Card */}
       <div
         className={`p-8 rounded-2xl shadow-xl w-full max-w-md text-center transition-all duration-300 backdrop-blur-md ${
           darkMode ? "bg-gray-900 bg-opacity-30 border border-gray-700" : "bg-gray-200 bg-opacity-80 border border-gray-300"
         } relative z-10`}
       >
-        <h2 className={`text-3xl font-bold tracking-tight animate-fade-in ${darkMode ? "text-white" : "text-gray-900"}`}>Create an Account</h2>
-        <p className={`text-md mt-2 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Join us and start blending names today!</p>
+        <h2 className={`text-3xl font-bold tracking-tight animate-fade-in ${darkMode ? "text-white" : "text-gray-900"}`}>Welcome Back</h2>
+        <p className={`text-md mt-2 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Unlock your blending journey</p>
 
         <form className="mt-6 flex flex-col gap-5" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={handleChange}
-            className={`w-full p-3 rounded-lg border ${
-              darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
-            } focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all`}
-            required
-          />
-          {errors.name && <p className={`text-sm ${darkMode ? "text-red-300" : "text-red-500"} animate-slide-up`}>{errors.name}</p>}
-
           <input
             type="email"
             name="email"
@@ -130,7 +111,6 @@ function SignUpPage() {
           />
           {errors.email && <p className={`text-sm ${darkMode ? "text-red-300" : "text-red-500"} animate-slide-up`}>{errors.email}</p>}
 
-          {/* 👁️ Password Field */}
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -154,30 +134,6 @@ function SignUpPage() {
           </div>
           {errors.password && <p className={`text-sm ${darkMode ? "text-red-300" : "text-red-500"} animate-slide-up`}>{errors.password}</p>}
 
-          {/* 🔁 Confirm Password */}
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className={`w-full p-3 rounded-lg border ${
-                darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
-              } focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all pr-10`}
-              required
-            />
-            <span
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className={`absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer ${
-                darkMode ? "text-gray-300 hover:text-purple-300" : "text-gray-600 hover:text-purple-500"
-              } transition`}
-            >
-              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </span>
-          </div>
-          {errors.confirmPassword && <p className={`text-sm ${darkMode ? "text-red-300" : "text-red-500"} animate-slide-up`}>{errors.confirmPassword}</p>}
-
           <button
             type="submit"
             className={`relative bg-purple-700 text-white font-bold py-3 px-6 rounded-full text-lg transition-all duration-300 overflow-hidden group ${
@@ -192,10 +148,10 @@ function SignUpPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-16 0z"></path>
                   </svg>
-                  Signing Up...
+                  Logging In...
                 </span>
               ) : (
-                "Sign Up"
+                "Login"
               )}
             </span>
             {!loading && (
@@ -215,17 +171,16 @@ function SignUpPage() {
         )}
 
         <p className={`text-sm mt-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-          Already have an account?{" "}
+          Don’t have an account?{" "}
           <Link
-            to="/login"
+            to="/signup"
             className={`underline ${darkMode ? "text-purple-300 hover:text-purple-400" : "text-purple-600 hover:text-purple-800"} transition`}
           >
-            Log in
+            Sign up
           </Link>
         </p>
       </div>
 
-      {/* Tailwind Animation Classes */}
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -246,4 +201,4 @@ function SignUpPage() {
   );
 }
 
-export default SignUpPage;
+export default LoginPage;
