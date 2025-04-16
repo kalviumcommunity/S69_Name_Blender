@@ -17,7 +17,7 @@ function Update() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/read", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/read`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -40,7 +40,7 @@ function Update() {
 
   const doneSubmit = async (data) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/update/${email}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/update${email}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: data.name }),

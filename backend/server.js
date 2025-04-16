@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [`${import.meta.env.VITE_API_URL}`, `${import.meta.env.VITE_API_URL}`],
     methods: ["GET", "POST"],
   },
 });
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use("/api", itemRouter);
 
 mongoose
-  .connect("mongodb://localhost:27017/nameBlender")
+  .connect(process.env.DB_URL)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
