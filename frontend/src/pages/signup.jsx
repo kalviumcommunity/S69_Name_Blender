@@ -44,7 +44,7 @@ function SignUpPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/register", { // Updated to /api/register
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/register`, { // Updated to /api/register
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: formData.name, email: formData.email, password: formData.password }), // Only send necessary fields

@@ -9,7 +9,7 @@ function Delete() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/read", {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/read`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -30,7 +30,7 @@ function Delete() {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/delete/${email}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/delete ${email}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });

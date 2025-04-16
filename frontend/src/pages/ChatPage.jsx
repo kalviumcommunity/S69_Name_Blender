@@ -5,7 +5,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 
-const socket = io("http://localhost:3000", {
+const socket = io(`${import.meta.env.VITE_API_URL}`, {
   autoConnect: false,
   reconnection: true,
   reconnectionAttempts: 5,
@@ -45,7 +45,7 @@ function ChatPage() {
         setUser(parsedUser);
 
         try {
-          const response = await axios.get("http://localhost:3000/api/messages");
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/messages`);
           if (Array.isArray(response.data)) {
             setMessages(response.data);
           } else {

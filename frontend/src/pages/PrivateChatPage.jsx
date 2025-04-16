@@ -5,7 +5,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 
-const socket = io("http://localhost:3000", {
+const socket = io(`${import.meta.env.VITE_API_URL}`, {
   autoConnect: false,
   reconnection: true,
   reconnectionAttempts: 5,
@@ -45,7 +45,7 @@ function PrivateChatPage() {
       });
 
       axios
-        .get(`http://localhost:3000/api/private-messages/${parsedUser.name}/${recipientId}`)
+        .get(`${import.meta.env.VITE_API_URL}/api/private-messages/${parsedUser.name}/${recipientId}`)
         .then((response) => {
           console.log("Fetched private messages:", response.data);
           setMessages(Array.isArray(response.data) ? response.data : []);
