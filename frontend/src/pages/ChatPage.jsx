@@ -5,7 +5,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 
-const socket = io(`${import.meta.env.VITE_API_URL}`, {
+console.log("Socket.IO URL:", import.meta.env.VITE_API_URL);
+const socket = io(import.meta.env.VITE_API_URL || "https://s69-name-blender-4.onrender.com", {
   autoConnect: false,
   reconnection: true,
   reconnectionAttempts: 5,
@@ -45,7 +46,9 @@ function ChatPage() {
         setUser(parsedUser);
 
         try {
-          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/messages`);
+          const response = await axios.get(
+            `${(import.meta.env.VITE_API_URL || "https://s69-name-blender-4.onrender.com").replace(/\/$/, "")}/api/messages`
+          );
           if (Array.isArray(response.data)) {
             setMessages(response.data);
           } else {
@@ -804,7 +807,7 @@ function ChatPage() {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideIn {
           from {
             transform: translateX(100%);
