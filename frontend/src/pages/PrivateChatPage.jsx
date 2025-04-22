@@ -5,7 +5,8 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 
-const socket = io(`${import.meta.env.VITE_API_URL}`, {
+console.log("Socket.IO URL:", import.meta.env.VITE_API_URL);
+const socket = io(import.meta.env.VITE_API_URL || "https://s69-name-blender-4.onrender.com", {
   autoConnect: false,
   reconnection: true,
   reconnectionAttempts: 5,
@@ -45,7 +46,9 @@ function PrivateChatPage() {
       });
 
       axios
-        .get(`${import.meta.env.VITE_API_URL}/api/private-messages/${parsedUser.name}/${recipientId}`)
+        .get(
+          `${(import.meta.env.VITE_API_URL || "https://s69-name-blender-4.onrender.com").replace(/\/$/, "")}/api/private-messages/${parsedUser.name}/${recipientId}`
+        )
         .then((response) => {
           console.log("Fetched private messages:", response.data);
           setMessages(Array.isArray(response.data) ? response.data : []);
@@ -178,7 +181,7 @@ function PrivateChatPage() {
         setError("Failed to send message: " + response.message);
       }
     });
-    socket.emit("stopTyping", { senderId: user.name });
+    socket.emit("stopTyping", { senderId: user.name, recipientId });
     setMessage("");
     setReplyTo(null);
   };
@@ -186,9 +189,9 @@ function PrivateChatPage() {
   const handleTyping = (e) => {
     setMessage(e.target.value);
     if (e.target.value.trim()) {
-      socket.emit("typing", { senderId: user.name });
+      socket.emit("typing", { senderId: user.name, recipientId });
     } else {
-      socket.emit("stopTyping", { senderId: user.name });
+      socket.emit("stopTyping", { senderId: user.name, recipientId });
     }
   };
 
@@ -450,7 +453,7 @@ function PrivateChatPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text}...` : "Type a message..."}
+                placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...` : "Type a message..."}
                 value={message}
                 onChange={handleTyping}
                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
