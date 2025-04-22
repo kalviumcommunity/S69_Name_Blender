@@ -100,23 +100,35 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("typing", ({ senderId }) => {
+  socket.on("typing", ({ senderId, recipientId }) => {
     if (!senderId) return;
     const now = Date.now();
     if (!typingTimestamps[senderId] || now - typingTimestamps[senderId] > 1000) {
       typingTimestamps[senderId] = now;
-      console.log(`${senderId} is typing`);
-      socket.broadcast.emit("typing", { senderId });
+      console.log(`${senderId} is typing${recipientId ? ` to ${recipientId}` : ""}`);
+      if (recipientId) {
+        // Private chat: Send typing event only to the recipient
+        socket.to(recipientId).emit("typing", { senderId });
+      } else {
+        // Global chat: Broadcast to all except sender
+        socket.broadcast.emit("typing", { senderId });
+      }
     }
   });
 
-  socket.on("stopTyping", ({ senderId }) => {
+  socket.on("stopTyping", ({ senderId, recipientId }) => {
     if (!senderId) return;
     const now = Date.now();
     if (!typingTimestamps[senderId] || now - typingTimestamps[senderId] > 1000) {
       typingTimestamps[senderId] = now;
-      console.log(`${senderId} stopped typing`);
-      socket.broadcast.emit("stopTyping", { senderId });
+      console.log(`${senderId} stopped typing${recipientId ? ` to ${recipientId}` : ""}`);
+      if (recipientId) {
+        // Private chat: Send stopTyping event only to the recipient
+        socket.to(recipientId).emit("stopTyping", { senderId });
+      } else {
+        // Global chat: Broadcast to all except sender
+        socket.broadcast.emit("stopTyping", { senderId });
+      }
     }
   });
 
