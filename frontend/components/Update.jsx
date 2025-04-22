@@ -40,10 +40,10 @@ function Update() {
 
   const doneSubmit = async (data) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/update${email}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/update/${encodeURIComponent(email)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: data.name }),
+        body: JSON.stringify({ name: data.name, email: values.email }),
       });
 
       const responseData = await response.json();
