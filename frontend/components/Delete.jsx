@@ -30,12 +30,23 @@ function Delete() {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/delete ${email}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/delete/${encodeURIComponent(email)}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
-      const responseData = await response.json();
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error("Unexpected server response");
+      }
+
       if (response.ok) {
         alert("Deleted Successfully!");
         navigate("/");
