@@ -15,7 +15,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage />} />
 {/*         <Route path="/" element={<Data />} /> */}
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/update/:email" element={<Update />} />
