@@ -828,7 +828,7 @@ function PrivateChatPage() {
             data-tooltip-id="back-tooltip"
             data-tooltip-content="Back to Global Chat"
           >
-            <ArrowLeft size={16} />
+             <ArrowLeft size={16} />
           </button>
           <Tooltip id="back-tooltip" />
           <span className={`text-lg font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
@@ -866,7 +866,7 @@ function PrivateChatPage() {
             onClick={handleLogout}
             className={`p-2 rounded-full ${darkMode ? "bg-red-600 hover:bg-red-500" : "bg-red-400 hover:bg-red-300"} transition-all`}
             data-tooltip-id="logout-tooltip"
-            data-tooltip-content="Log Out"
+            Data-tooltip-content="Log Out"
           >
             <LogOut size={16} className="text-white" />
           </button>
