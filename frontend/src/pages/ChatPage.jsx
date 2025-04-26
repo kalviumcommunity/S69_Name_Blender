@@ -968,7 +968,7 @@ function ChatPage() {
     const handleConnectError = (err) => {
       console.error("Socket connection error:", err.message);
       setIsOnline(false);
-      setNotification({ message: "Connection lost.", type: "error" });
+      setNotification({ message: "Connection lost. Reconnecting...", type: "error" });
       setTimeout(() => setNotification(null), 5000);
     };
 
@@ -1088,7 +1088,6 @@ function ChatPage() {
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("userList", handleUserList);
       socket.off("typing", handleTyping);
-      lj
       socket.off("stopTyping", handleStopTyping);
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageEdited", handleMessageEdited);
@@ -1649,7 +1648,7 @@ function ChatPage() {
           <div
             className={`p-6 rounded-2xl shadow-xl max-w-md text-center ${
               darkMode
-                ? "bg-gray-900 bg-opacity-90 border border-gray-700"
+                ? "bg-gray-900 bg-opacityuncu-90 border border-gray-700"
                 : "bg-gray-200 bg-opacity-90 border border-gray-300"
             }`}
           >
