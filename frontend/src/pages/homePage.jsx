@@ -10,12 +10,21 @@
 // }
 
 // function HomePage() {
-//   const [darkMode, setDarkMode] = useState(true);
+//   // Initialize darkMode from localStorage, default to true if not set
+//   const [darkMode, setDarkMode] = useState(() => {
+//     const savedMode = localStorage.getItem("darkMode");
+//     return savedMode !== null ? JSON.parse(savedMode) : true;
+//   });
 //   const [name1, setName1] = useState("");
 //   const [name2, setName2] = useState("");
 //   const [blendedName, setBlendedName] = useState("");
 //   const [shareMessage, setShareMessage] = useState("");
 //   const [user, setUser] = useState(null);
+
+//   // Save darkMode to localStorage whenever it changes
+//   useEffect(() => {
+//     localStorage.setItem("darkMode", JSON.stringify(darkMode));
+//   }, [darkMode]);
 
 //   useEffect(() => {
 //     const storedUser = localStorage.getItem("user");
@@ -123,7 +132,9 @@
 //               : "bg-yellow-200 hover:bg-yellow-300 text-gray-900"
 //           } transition-all`}
 //           data-tooltip-id="mode-tooltip"
-//           data-tooltip-content={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+//           data-tooltip-content={
+//             darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
+//           }
 //         >
 //           {darkMode ? <Sun size={16} /> : <Moon size={16} />}
 //         </button>
@@ -265,7 +276,7 @@
 //         </p>
 //       </div>
 
-//       <style jsx>{`
+//       <style>{`
 //         @keyframes fadeIn {
 //           from {
 //             opacity: 0;
@@ -277,7 +288,6 @@
 //         .animate-fade-in {
 //           animation: fadeIn 0.5s ease-in-out;
 //         }
-
 //         @keyframes colorFlowDark {
 //           0% {
 //             color: #ffffff;
@@ -298,7 +308,6 @@
 //         .animate-color-flow-dark {
 //           animation: colorFlowDark 6s infinite ease-in-out;
 //         }
-
 //         @keyframes colorFlowLight {
 //           0% {
 //             color: #6b7280;
@@ -327,10 +336,11 @@
 // export default HomePage;
 
 
+
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
-import { RefreshCw, Share2, Moon, Sun } from "lucide-react";
+import { RefreshCw, Share2, Moon, Sun, LogOut } from "lucide-react";
 
 function blendNames(name1, name2) {
   const half1 = name1.slice(0, Math.ceil(name1.length / 2));
@@ -339,7 +349,6 @@ function blendNames(name1, name2) {
 }
 
 function HomePage() {
-  // Initialize darkMode from localStorage, default to true if not set
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem("darkMode");
     return savedMode !== null ? JSON.parse(savedMode) : true;
@@ -349,8 +358,8 @@ function HomePage() {
   const [blendedName, setBlendedName] = useState("");
   const [shareMessage, setShareMessage] = useState("");
   const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
-  // Save darkMode to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
@@ -410,6 +419,12 @@ function HomePage() {
     setTimeout(() => setShareMessage(""), 2000);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("darkMode"); // Optional: reset dark mode on logout
+    navigate("/login");
+  };
+
   return (
     <div
       className={`${
@@ -452,7 +467,21 @@ function HomePage() {
         </div>
       )}
 
-      <div className="fixed top-4 right-10 z-20">
+      <div className="fixed top-4 right-10 z-20 flex items-center gap-2">
+        {user && (
+          <button
+            onClick={handleLogout}
+            className={`p-2 rounded-full ${
+              darkMode
+                ? "bg-purple-700 hover:bg-purple-600 text-white"
+                : "bg-purple-200 hover:bg-purple-300 text-gray-900"
+            } transition-all`}
+            data-tooltip-id="logout-tooltip"
+            data-tooltip-content="Log Out"
+          >
+            <LogOut size={16} />
+          </button>
+        )}
         <button
           onClick={() => setDarkMode(!darkMode)}
           className={`p-2 rounded-full ${
@@ -468,6 +497,7 @@ function HomePage() {
           {darkMode ? <Sun size={16} /> : <Moon size={16} />}
         </button>
         <Tooltip id="mode-tooltip" />
+        <Tooltip id="logout-tooltip" />
       </div>
 
       <div
