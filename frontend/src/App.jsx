@@ -2,7 +2,7 @@ import React from "react";
 import LandingPage from "./pages/LandingPage";
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Data from "./pages/data";
+// import Data from "./pages/data";
 import SignUpPage from "./pages/signup";
 import Update from "../components/Update";
 import Delete from "../components/Delete";
@@ -16,7 +16,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/landing" element={<LandingPage />} />
-        <Route path="/" element={<Data />} />
+{/*         <Route path="/" element={<Data />} /> */}
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/update/:email" element={<Update />} />
         <Route path="/delete/:email" element={<Delete />} />
