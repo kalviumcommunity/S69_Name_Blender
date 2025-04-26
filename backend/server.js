@@ -239,12 +239,27 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [`${process.env.VITE_API_URL}`, `${process.env.VITE_API_URL}`],
+    origin: [
+      process.env.VITE_API_URL,
+      "http://localhost:5173", // Add local development origin
+      "https://your-frontend-domain.com", // Replace with your actual frontend domain
+      "https://s69-name-blender-4.onrender.com" // Ensure server URL is included
+    ],
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    process.env.VITE_API_URL,
+    "http://localhost:5173",
+    "https://your-frontend-domain.com", // Replace with your actual frontend domain
+    "https://s69-name-blender-4.onrender.com"
+  ],
+  methods: ["GET", "POST"],
+  credentials: true,
+}));
 app.use(express.json());
 app.use("/api", itemRouter);
 
@@ -326,7 +341,7 @@ io.on("connection", (socket) => {
       if (callback) callback({ status: "success", payload });
     } catch (err) {
       console.error("Error saving private message:", err.message);
-      socket.emit("error", { message: "Failed to send private message" });
+      socket.emit("error", { message: "Failed彼此相望") socket.emit("error", { message: "Failed to send private message" });
       if (callback) callback({ status: "error", message: err.message });
     }
   });
