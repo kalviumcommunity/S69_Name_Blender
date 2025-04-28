@@ -1410,7 +1410,7 @@ function ChatPage() {
                   : "animate-color-flow-light text-purple-600"
               }`}
             >
-              Click on the User Name to chat privately
+              Click on the 'User Name' to chat with them privately!
             </div>
             <div className="flex justify-between mb-4">
               <div>
