@@ -11,9 +11,9 @@
 //   cors: {
 //     origin: [
 //       process.env.VITE_API_URL,
-//       "http://localhost:5173", // Add local development origin
-//       "https://your-frontend-domain.com", // Replace with your actual frontend domain
-//       "https://s69-name-blender-4.onrender.com" // Ensure server URL is included
+//       "http://localhost:5173",
+//       "https://your-frontend-domain.com",
+//       "https://s69-name-blender-4.onrender.com"
 //     ],
 //     methods: ["GET", "POST"],
 //     credentials: true,
@@ -24,7 +24,7 @@
 //   origin: [
 //     process.env.VITE_API_URL,
 //     "http://localhost:5173",
-//     "https://your-frontend-domain.com", // Replace with your actual frontend domain
+//     "https://your-frontend-domain.com",
 //     "https://s69-name-blender-4.onrender.com"
 //   ],
 //   methods: ["GET", "POST"],
@@ -32,6 +32,18 @@
 // }));
 // app.use(express.json());
 // app.use("/api", itemRouter);
+
+// // Define PrivateChatRelationship Schema
+// const privateChatSchema = new mongoose.Schema({
+//   user1: { type: String, required: true },
+//   user2: { type: String, required: true },
+//   createdAt: { type: Date, default: Date.now },
+// });
+
+// // Ensure unique pairs (user1, user2) with user1 < user2 to avoid duplicates
+// privateChatSchema.index({ user1: 1, user2: 1 }, { unique: true });
+
+// const PrivateChatRelationship = mongoose.model("PrivateChatRelationship", privateChatSchema);
 
 // mongoose
 //   .connect(process.env.DB_URL)
@@ -111,7 +123,7 @@
 //       if (callback) callback({ status: "success", payload });
 //     } catch (err) {
 //       console.error("Error saving private message:", err.message);
-//       socket.emit("error", { message: "Failed彼此相望") socket.emit("error", { message: "Failed to send private message" });
+//       socket.emit("error", { message: "Failed to send private message" });
 //       if (callback) callback({ status: "error", message: err.message });
 //     }
 //   });
@@ -123,10 +135,8 @@
 //       typingTimestamps[senderId] = now;
 //       console.log(`${senderId} is typing${recipientId ? ` to ${recipientId}` : ""}`);
 //       if (recipientId) {
-//         // Private chat: Send typing event only to the recipient
 //         socket.to(recipientId).emit("typing", { senderId });
 //       } else {
-//         // Global chat: Broadcast to all except sender
 //         socket.broadcast.emit("typing", { senderId });
 //       }
 //     }
@@ -139,10 +149,8 @@
 //       typingTimestamps[senderId] = now;
 //       console.log(`${senderId} stopped typing${recipientId ? ` to ${recipientId}` : ""}`);
 //       if (recipientId) {
-//         // Private chat: Send stopTyping event only to the recipient
 //         socket.to(recipientId).emit("stopTyping", { senderId });
 //       } else {
-//         // Global chat: Broadcast to all except sender
 //         socket.broadcast.emit("stopTyping", { senderId });
 //       }
 //     }
@@ -191,27 +199,77 @@
 //     }
 //   });
 
-//   socket.on("privateChatRequest", ({ senderId, recipientId }) => {
-//     if (!senderId || !recipientId) return;
-
-//     const recipientSocket = [...io.sockets.sockets.values()].find((s) => s.username === recipientId);
-//     if (recipientSocket) {
-//       console.log(`Sending private chat request from ${senderId} to ${recipientId}`);
-//       recipientSocket.emit("privateChatRequest", { senderId, recipientId });
-//     } else {
-//       socket.emit("error", { message: `Recipient ${recipientId} not found` });
+//   socket.on("checkPrivateChatRelationship", async ({ senderId, recipientId }, callback) => {
+//     try {
+//       if (!senderId || !recipientId) throw new Error("Missing fields");
+//       // Ensure consistent ordering: user1 < user2
+//       const [user1, user2] = [senderId, recipientId].sort();
+//       const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
+//       callback({ status: "success", exists: !!relationship });
+//     } catch (err) {
+//       console.error("Error checking private chat relationship:", err.message);
+//       callback({ status: "error", message: err.message });
 //     }
 //   });
 
-//   socket.on("acceptPrivateChat", ({ senderId, recipientId }) => {
+//   socket.on("privateChatRequest", async ({ senderId, recipientId }, callback) => {
+//     if (!senderId || !recipientId) {
+//       if (callback) callback({ status: "error", message: "Missing senderId or recipientId" });
+//       return;
+//     }
+
+//     try {
+//       // Check if a relationship already exists
+//       const [user1, user2] = [senderId, recipientId].sort();
+//       const existingRelationship = await PrivateChatRelationship.findOne({ user1, user2 });
+//       if (existingRelationship) {
+//         socket.emit("privateChatAccepted", { senderId, recipientId });
+//         const recipientSocket = [...io.sockets.sockets.values()].find((s) => s.username === recipientId);
+//         if (recipientSocket) {
+//           recipientSocket.emit("privateChatAccepted", { senderId, recipientId });
+//         }
+//         if (callback) callback({ status: "success", message: "Relationship already exists" });
+//         return;
+//       }
+
+//       const recipientSocket = [...io.sockets.sockets.values()].find((s) => s.username === recipientId);
+//       if (recipientSocket) {
+//         console.log(`Sending private chat request from ${senderId} to ${recipientId}`);
+//         recipientSocket.emit("privateChatRequest", { senderId, recipientId });
+//         if (callback) callback({ status: "success", message: "Request sent" });
+//       } else {
+//         socket.emit("error", { message: `Recipient ${recipientId} not found` });
+//         if (callback) callback({ status: "error", message: `Recipient ${recipientId} not found` });
+//       }
+//     } catch (err) {
+//       console.error("Error sending private chat request:", err.message);
+//       socket.emit("error", { message: "Failed to send private chat request" });
+//       if (callback) callback({ status: "error", message: err.message });
+//     }
+//   });
+
+//   socket.on("acceptPrivateChat", async ({ senderId, recipientId }) => {
 //     if (!senderId || !recipientId) return;
 
-//     const senderSocket = [...io.sockets.sockets.values()].find((s) => s.username === senderId);
-//     const recipientSocket = [...io.sockets.sockets.values()].find((s) => s.username === recipientId);
-//     if (senderSocket && recipientSocket) {
-//       console.log(`Private chat accepted by ${recipientId} for ${senderId}`);
-//       senderSocket.emit("privateChatAccepted", { senderId, recipientId });
-//       recipientSocket.emit("privateChatAccepted", { senderId, recipientId });
+//     try {
+//       // Save the private chat relationship
+//       const [user1, user2] = [senderId, recipientId].sort();
+//       await PrivateChatRelationship.findOneAndUpdate(
+//         { user1, user2 },
+//         { user1, user2, createdAt: Date.now() },
+//         { upsert: true, new: true }
+//       );
+
+//       const senderSocket = [...io.sockets.sockets.values()].find((s) => s.username === senderId);
+//       const recipientSocket = [...io.sockets.sockets.values()].find((s) => s.username === recipientId);
+//       if (senderSocket && recipientSocket) {
+//         console.log(`Private chat accepted by ${recipientId} for ${senderId}`);
+//         senderSocket.emit("privateChatAccepted", { senderId, recipientId });
+//         recipientSocket.emit("privateChatAccepted", { senderId, recipientId });
+//       }
+//     } catch (err) {
+//       console.error("Error saving private chat relationship:", err.message);
+//       socket.emit("error", { message: "Failed to accept private chat" });
 //     }
 //   });
 
@@ -242,7 +300,7 @@
 
 
 
-
+```javascript
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -258,23 +316,25 @@ const io = new Server(server, {
       process.env.VITE_API_URL,
       "http://localhost:5173",
       "https://your-frontend-domain.com",
-      "https://s69-name-blender-4.onrender.com"
+      "https://s69-name-blender-4.onrender.com",
     ],
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-app.use(cors({
-  origin: [
-    process.env.VITE_API_URL,
-    "http://localhost:5173",
-    "https://your-frontend-domain.com",
-    "https://s69-name-blender-4.onrender.com"
-  ],
-  methods: ["GET", "POST"],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      process.env.VITE_API_URL,
+      "http://localhost:5173",
+      "https://your-frontend-domain.com",
+      "https://s69-name-blender-4.onrender.com",
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use("/api", itemRouter);
 
@@ -447,7 +507,6 @@ io.on("connection", (socket) => {
   socket.on("checkPrivateChatRelationship", async ({ senderId, recipientId }, callback) => {
     try {
       if (!senderId || !recipientId) throw new Error("Missing fields");
-      // Ensure consistent ordering: user1 < user2
       const [user1, user2] = [senderId, recipientId].sort();
       const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
       callback({ status: "success", exists: !!relationship });
@@ -464,7 +523,6 @@ io.on("connection", (socket) => {
     }
 
     try {
-      // Check if a relationship already exists
       const [user1, user2] = [senderId, recipientId].sort();
       const existingRelationship = await PrivateChatRelationship.findOne({ user1, user2 });
       if (existingRelationship) {
@@ -497,7 +555,6 @@ io.on("connection", (socket) => {
     if (!senderId || !recipientId) return;
 
     try {
-      // Save the private chat relationship
       const [user1, user2] = [senderId, recipientId].sort();
       await PrivateChatRelationship.findOneAndUpdate(
         { user1, user2 },
@@ -528,6 +585,134 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Video call event handlers
+  socket.on("call:initiate", async ({ to, offer, from }, callback) => {
+    try {
+      if (!to || !from || !offer) throw new Error("Missing fields");
+      // Validate private chat relationship
+      const [user1, user2] = [from, to].sort();
+      const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
+      if (!relationship) {
+        throw new Error("No private chat relationship exists");
+      }
+
+      const recipientSocket = [...io.sockets.sockets.values()].find((s) => s.username === to);
+      if (recipientSocket) {
+        console.log(`Initiating call from ${from} to ${to}`);
+        recipientSocket.emit("call:incoming", { from });
+        recipientSocket.emit("call:offer", { offer });
+        if (callback) callback({ status: "success", message: "Call initiated" });
+      } else {
+        socket.emit("error", { message: `Recipient ${to} not found` });
+        if (callback) callback({ status: "error", message: `Recipient ${to} not found` });
+      }
+    } catch (err) {
+      console.error("Error initiating call:", err.message);
+      socket.emit("error", { message: err.message });
+      if (callback) callback({ status: "error", message: err.message });
+    }
+  });
+
+  socket.on("call:accept", async ({ to }, callback) => {
+    try {
+      if (!to) throw new Error("Missing recipient ID");
+      // Validate private chat relationship
+      const [user1, user2] = [socket.username, to].sort();
+      const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
+      if (!relationship) {
+        throw new Error("No private chat relationship exists");
+      }
+
+      socket.to(to).emit("call:accepted");
+      console.log(`Call accepted by ${socket.username} for ${to}`);
+      if (callback) callback({ status: "success", message: "Call accepted" });
+    } catch (err) {
+      console.error("Error accepting call:", err.message);
+      socket.emit("error", { message: err.message });
+      if (callback) callback({ status: "error", message: err.message });
+    }
+  });
+
+  socket.on("call:reject", async ({ to }, callback) => {
+    try {
+      if (!to) throw new Error("Missing recipient ID");
+      // Validate private chat relationship
+      const [user1, user2] = [socket.username, to].sort();
+      const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
+      if (!relationship) {
+        throw new Error("No private chat relationship exists");
+      }
+
+      socket.to(to).emit("call:rejected");
+      console.log(`Call rejected by ${socket.username} for ${to}`);
+      if (callback) callback({ status: "success", message: "Call rejected" });
+    } catch (err) {
+      console.error("Error rejecting call:", err.message);
+      socket.emit("error", { message: err.message });
+      if (callback) callback({ status: "error", message: err.message });
+    }
+  });
+
+  socket.on("call:end", async ({ to }, callback) => {
+    try {
+      if (!to) throw new Error("Missing recipient ID");
+      // Validate private chat relationship
+      const [user1, user2] = [socket.username, to].sort();
+      const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
+      if (!relationship) {
+        throw new Error("No private chat relationship exists");
+      }
+
+      socket.to(to).emit("call:ended");
+      console.log(`Call ended by ${socket.username} for ${to}`);
+      if (callback) callback({ status: "success", message: "Call ended" });
+    } catch (err) {
+      console.error("Error ending call:", err.message);
+      socket.emit("error", { message: err.message });
+      if (callback) callback({ status: "error", message: err.message });
+    }
+  });
+
+  socket.on("call:answer", async ({ answer, to }, callback) => {
+    try {
+      if (!to || !answer) throw new Error("Missing fields");
+      // Validate private chat relationship
+      const [user1, user2] = [socket.username, to].sort();
+      const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
+      if (!relationship) {
+        throw new Error("No private chat relationship exists");
+      }
+
+      socket.to(to).emit("call:answer", { answer });
+      console.log(`Call answer sent from ${socket.username} to ${to}`);
+      if (callback) callback({ status: "success", message: "Answer sent" });
+    } catch (err) {
+      console.error("Error sending call answer:", err.message);
+      socket.emit("error", { message: err.message });
+      if (callback) callback({ status: "error", message: err.message });
+    }
+  });
+
+  socket.on("call:ice-candidate", async ({ candidate, to }, callback) => {
+    try {
+      if (!to || !candidate) throw new Error("Missing fields");
+      // Validate private chat relationship
+      const [user1, user2] = [socket.username, to].sort();
+      const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
+      if (!relationship) {
+        throw new Error("No private chat relationship exists");
+      }
+
+      socket.to(to).emit("call:ice-candidate", { candidate });
+      console.log(`ICE candidate sent from ${socket.username} to ${to}`);
+      if (callback) callback({ status: "success", message: "ICE candidate sent" });
+    } catch (err) {
+      console.error("Error sending ICE candidate:", err.message);
+      socket.emit("error", { message: err.message });
+      if (callback) callback({ status: "error", message: err.message });
+    }
+  });
+
   socket.on("disconnect", () => {
     if (socket.username) {
       console.log(`${socket.username} disconnected`);
@@ -542,3 +727,4 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+```
