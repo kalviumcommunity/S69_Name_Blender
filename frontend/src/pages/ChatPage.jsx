@@ -499,39 +499,25 @@
 //             : "bg-gray-200 bg-opacity-80 border border-gray-300"
 //         } relative z-10 mt-16`}
 //       >
-//         <h1
-//           className={`text-3xl font-bold mb-4 animate-fade-in ${
-//             darkMode ? "text-white" : "text-gray-900"
-//           }`}
-//         >
-          
-//           💬 Global Chat
-//         </h1>
-//         {!user ? (
-//           <div className="flex flex-col items-center gap-4">
-//             <p
-//               className={`text-md mb-4 ${
-//                 darkMode ? "text-gray-300" : "text-gray-700"
+//         {user && (
+//           <>
+//             <h1
+//               className={`text-3xl font-bold mb-4 animate-fade-in ${
+//                 darkMode ? "text-white" : "text-gray-900"
 //               }`}
 //             >
-//               Please log in to chat.
-//             </p>
-//             <button
-//               onClick={() => navigate("/login")}
-//               className={`px-4 py-2 rounded-full ${
+//               💬 Global Chat
+//             </h1>
+//             {/* Static Text with Color Effect */}
+//             <div
+//               className={`mb-4 text-sm font-medium ${
 //                 darkMode
-//                   ? "bg-purple-700 hover:bg-purple-600 text-white"
-//                   : "bg-purple-500 hover:bg-purple-400 text-white"
-//               } transition-all`}
-//               data-tooltip-id="login-tooltip"
-//               data-tooltip-content="Go to Login Page"
+//                   ? "animate-color-flow-dark text-purple-300"
+//                   : "animate-color-flow-light text-purple-600"
+//               }`}
 //             >
-//               Go to Login
-//             </button>
-//             <Tooltip id="login-tooltip" />
-//           </div>
-//         ) : (
-//           <>
+//               Click on the 'User Name' to chat with them privately!
+//             </div>
 //             <div className="flex justify-between mb-4">
 //               <div>
 //                 <p
@@ -743,6 +729,30 @@
 //             </div>
 //           </>
 //         )}
+//         {!user && (
+//           <div className="flex flex-col items-center gap-4">
+//             <p
+//               className={`text-md mb-4 ${
+//                 darkMode ? "text-gray-300" : "text-gray-700"
+//               }`}
+//             >
+//               Please log in to chat.
+//             </p>
+//             <button
+//               onClick={() => navigate("/login")}
+//               className={`px-4 py-2 rounded-full ${
+//                 darkMode
+//                   ? "bg-purple-700 hover:bg-purple-600 text-white"
+//                   : "bg-purple-500 hover:bg-purple-400 text-white"
+//               } transition-all`}
+//               data-tooltip-id="login-tooltip"
+//               data-tooltip-content="Go to Login Page"
+//             >
+//               Go to Login
+//             </button>
+//             <Tooltip id="login-tooltip" />
+//           </div>
+//         )}
 //       </div>
 
 //       {notification && (
@@ -890,10 +900,8 @@
 
 // export default ChatPage;
 
-
-
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Trash2, Edit2, LogOut, MoreVertical, Moon, Sun, Home } from "lucide-react";
+import { Send, Trash2, Edit2, LogOut, MoreVertical, Moon, Sun, Home, Search } from "lucide-react";
 import io from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -907,7 +915,6 @@ const socket = io(import.meta.env.VITE_API_URL || "https://s69-name-blender-4.on
 });
 
 function ChatPage() {
-  // Initialize darkMode from localStorage, default to true if not set
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem("darkMode");
     return savedMode !== null ? JSON.parse(savedMode) : true;
@@ -916,6 +923,7 @@ function ChatPage() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(""); // State for search bar
   const [typingUsers, setTypingUsers] = useState([]);
   const [isOnline, setIsOnline] = useState(false);
   const [menuOpen, setMenuOpen] = useState(null);
@@ -926,12 +934,10 @@ function ChatPage() {
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
 
-  // Save darkMode to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Rest of the useEffect and other logic remains unchanged
   useEffect(() => {
     let timeoutId;
 
@@ -1148,19 +1154,35 @@ function ChatPage() {
 
   const startPrivateChat = (recipientId) => {
     if (!user?.name || recipientId === user.name || pendingChatRequest) return;
-    console.log("Starting private chat with:", recipientId);
-    socket.emit("privateChatRequest", { senderId: user.name, recipientId });
-    setPendingChatRequest(recipientId);
-    setNotification({
-      message: `Private chat request sent to ${recipientId}. Waiting...`,
-      type: "info",
-    });
-    setTimeout(() => {
-      if (pendingChatRequest === recipientId) {
-        setNotification(null);
-        setPendingChatRequest(null);
+    console.log("Checking private chat with:", recipientId);
+    
+    // Check if a private chat relationship exists
+    socket.emit("checkPrivateChatRelationship", { senderId: user.name, recipientId }, (response) => {
+      console.log("Check private chat relationship response:", response);
+      if (response.status === "success" && response.exists) {
+        // Relationship exists, navigate directly
+        setNotification({
+          message: `Opening private chat with ${recipientId}.`,
+          type: "success",
+        });
+        setTimeout(() => setNotification(null), 5000);
+        navigate(`/private-chat/${recipientId}`);
+      } else {
+        // No relationship, send request
+        socket.emit("privateChatRequest", { senderId: user.name, recipientId });
+        setPendingChatRequest(recipientId);
+        setNotification({
+          message: `Private chat request sent to ${recipientId}. Waiting...`,
+          type: "info",
+        });
+        setTimeout(() => {
+          if (pendingChatRequest === recipientId) {
+            setNotification(null);
+            setPendingChatRequest(null);
+          }
+        }, 30000);
       }
-    }, 30000);
+    });
   };
 
   const handleAcceptPrivateChat = () => {
@@ -1257,6 +1279,11 @@ function ChatPage() {
       hour12: true,
     }).replace(",", "");
   };
+
+  // Filter users based on search query
+  const filteredUsers = users.filter((u) =>
+    u.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (notification?.message === "Please log in.") {
     return (
@@ -1402,7 +1429,6 @@ function ChatPage() {
             >
               💬 Global Chat
             </h1>
-            {/* Static Text with Color Effect */}
             <div
               className={`mb-4 text-sm font-medium ${
                 darkMode
@@ -1410,36 +1436,62 @@ function ChatPage() {
                   : "animate-color-flow-light text-purple-600"
               }`}
             >
-              Click on the 'User Name' to chat with them privately!
+              Click on the User Name to chat privately
             </div>
             <div className="flex justify-between mb-4">
-              <div>
+              <div className="w-full">
                 <p
-                  className={`text-md ${
+                  className={`text-md mb-2 ${
                     darkMode ? "text-gray-300" : "text-gray-700"
                   }`}
                 >
-                  Online Users ({users.length})
+                  Online Users ({filteredUsers.length})
                 </p>
+                {/* Search Bar */}
+                <div className="relative mb-2">
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`w-full p-2 pl-8 rounded-lg border ${
+                      darkMode
+                        ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+                        : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all`}
+                  />
+                  <Search
+                    size={16}
+                    className={`absolute left-2 top-1/2 transform -translate-y-1/2 ${
+                      darkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  />
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {users.map((u) => (
-                    <span
-                      key={u}
-                      className={`text-sm px-2 py-1 rounded-full cursor-pointer ${
-                        darkMode
-                          ? "bg-purple-600 bg-opacity-30 text-purple-300"
-                          : "bg-purple-200 bg-opacity-50 text-purple-600"
-                      } hover:${
-                        darkMode ? "bg-purple-500" : "bg-purple-300"
-                      } transition-all`}
-                      onClick={() => startPrivateChat(u)}
-                      data-tooltip-id={`user-tooltip-${u}`}
-                      data-tooltip-content="Chat Privately"
-                    >
-                      {u}
-                      <Tooltip id={`user-tooltip-${u}`} />
-                    </span>
-                  ))}
+                  {filteredUsers.length === 0 ? (
+                    <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
+                      No users found.
+                    </p>
+                  ) : (
+                    filteredUsers.map((u) => (
+                      <span
+                        key={u}
+                        className={`text-sm px-2 py-1 rounded-full cursor-pointer ${
+                          darkMode
+                            ? "bg-purple-600 bg-opacity-30 text-purple-300"
+                            : "bg-purple-200 bg-opacity-50 text-purple-600"
+                        } hover:${
+                          darkMode ? "bg-purple-500" : "bg-purple-300"
+                        } transition-all`}
+                        onClick={() => startPrivateChat(u)}
+                        data-tooltip-id={`user-tooltip-${u}`}
+                        data-tooltip-content="Chat Privately"
+                      >
+                        {u}
+                        <Tooltip id={`user-tooltip-${u}`} />
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -1793,5 +1845,3 @@ function ChatPage() {
 }
 
 export default ChatPage;
-
-
