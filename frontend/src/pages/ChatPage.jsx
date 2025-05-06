@@ -549,11 +549,11 @@
 //       </div>
 
 //       <div
-//         className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl text-center transition-all duration-300 backdrop-blur-md ${
+//         className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl transition-all duration-300 backdrop-blur-md ${
 //           darkMode
 //             ? "bg-gray-900 bg-opacity-30 border border-gray-700"
 //             : "bg-gray-200 bg-opacity-80 border border-gray-300"
-//         } relative z-10 mt-16`}
+//         } relative z-10 mt-16 flex flex-col h-[80vh]`}
 //       >
 //         {user && (
 //           <>
@@ -571,18 +571,18 @@
 //                   : "animate-color-flow-light text-purple-600"
 //               }`}
 //             >
-//               Click on the User Name to chat privately
+//               Click on a User Name to chat privately
 //             </div>
-//             <div className="flex justify-between mb-4">
+//             <div className="mb-4">
 //               <div className="w-full">
 //                 <p
-//                   className={`text-md mb-2 ${
+//                   className={`text-sm mb-2 ${
 //                     darkMode ? "text-gray-300" : "text-gray-700"
 //                   }`}
 //                 >
 //                   Online Users ({filteredUsers.length})
 //                 </p>
-//                 <div className="relative mb-2">
+//                 <div className="relative mb-3">
 //                   <input
 //                     type="text"
 //                     placeholder="Search users..."
@@ -601,7 +601,7 @@
 //                     }`}
 //                   />
 //                 </div>
-//                 <div className="flex flex-wrap gap-2">
+//                 <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto">
 //                   {filteredUsers.length === 0 ? (
 //                     <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
 //                       No users found.
@@ -610,7 +610,7 @@
 //                     filteredUsers.map((u) => (
 //                       <span
 //                         key={u}
-//                         className={`text-sm px-2 py-1 rounded-full cursor-pointer ${
+//                         className={`text-sm px-3 py-1 rounded-full cursor-pointer ${
 //                           darkMode
 //                             ? "bg-purple-600 bg-opacity-30 text-purple-300"
 //                             : "bg-purple-200 bg-opacity-50 text-purple-600"
@@ -629,17 +629,17 @@
 //                 </div>
 //               </div>
 //             </div>
-//             <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg flex flex-col gap-2">
+//             <div className="flex-1 overflow-y-auto mb-4 p-4 rounded-lg flex flex-col gap-3">
 //               {messages.length === 0 ? (
-//                 <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
+//                 <p className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
 //                   No messages yet. Start the conversation!
 //                 </p>
 //               ) : (
 //                 groupedMessages().map((group, groupIndex) => (
 //                   <div key={groupIndex} className="mb-4">
-//                     <div className="flex items-center justify-center mb-2">
+//                     <div className="flex items-center justify-center my-2">
 //                       <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
-//                       <span className={`px-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                       <span className={`px-3 text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
 //                         {group.date}
 //                       </span>
 //                       <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
@@ -647,14 +647,14 @@
 //                     {group.messages.map((msg) => (
 //                       <div
 //                         key={msg._id}
-//                         className={`flex flex-col group relative ${
-//                           msg.senderId === user.name ? "items-end" : "items-start"
-//                         } mb-2`} // Added 'group' class for hover effect
+//                         className={`flex group relative ${
+//                           msg.senderId === user.name ? "justify-end" : "justify-start"
+//                         } mb-2`}
 //                         onTouchStart={() => handleTouchStart(msg._id)}
 //                         onTouchEnd={handleTouchEnd}
 //                       >
 //                         <div
-//                           className={`relative max-w-[60%] p-2 rounded-xl flex flex-col hover:shadow-md transition-all ${
+//                           className={`relative max-w-[65%] p-2.5 rounded-xl flex flex-col transition-all ${
 //                             msg.senderId === user.name
 //                               ? darkMode
 //                                 ? "bg-purple-600 text-white"
@@ -699,13 +699,13 @@
 //                           </div>
 //                           {(menuOpen === msg._id || (msg._id === menuOpen && window.innerWidth >= 768)) && (
 //                             <div
-//                               className={`absolute z-20 mt-2 w-32 rounded-lg shadow-lg ${
+//                               className={`absolute z-30 mt-2 w-32 rounded-lg shadow-lg ${
 //                                 msg.senderId === user.name ? "right-0" : "left-0"
 //                               } ${
 //                                 darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
 //                               } border ${
 //                                 darkMode ? "border-gray-700" : "border-gray-300"
-//                               } md:group-hover:block md:hidden top-full`} // Hidden on mobile unless menuOpen, shown on hover for desktop
+//                               } hidden md:group-hover:block top-full`} // Ensure hover works on desktop
 //                             >
 //                               {msg.senderId === user.name && (
 //                                 <>
@@ -793,7 +793,7 @@
 //               <div ref={messagesEndRef} />
 //             </div>
 
-//             <div className="flex gap-2">
+//             <div className="flex gap-2 mt-auto">
 //               <input
 //                 type="text"
 //                 placeholder={
@@ -999,7 +999,6 @@
 // }
 
 // export default ChatPage;
-
 
 
 import React, { useState, useEffect, useRef } from "react";
@@ -1372,7 +1371,7 @@ function ChatPage() {
   const handleTouchStart = (msgId) => {
     touchTimeoutRef.current = setTimeout(() => {
       toggleMenu(msgId);
-    }, 500); // 500ms hold to show options
+    }, 500);
   };
 
   const handleTouchEnd = () => {
@@ -1657,59 +1656,61 @@ function ChatPage() {
                         onTouchStart={() => handleTouchStart(msg._id)}
                         onTouchEnd={handleTouchEnd}
                       >
-                        <div
-                          className={`relative max-w-[65%] p-2.5 rounded-xl flex flex-col transition-all ${
-                            msg.senderId === user.name
-                              ? darkMode
-                                ? "bg-purple-600 text-white"
-                                : "bg-purple-300 text-gray-900"
-                              : darkMode
-                              ? "bg-gray-700 text-gray-300"
-                              : "bg-gray-300 text-gray-700"
-                          } ${msg.replyTo ? "ml-4 mr-4" : ""}`}
-                        >
-                          {msg.replyTo && (
-                            <div
-                              className={`text-xs italic mb-1 ${
-                                darkMode ? "text-gray-400" : "text-gray-500"
-                              } border-l-2 pl-2 ${
-                                darkMode ? "border-gray-500" : "border-gray-400"
-                              }`}
-                            >
-                              Replying to:{" "}
-                              {messages.find((m) => m._id === msg.replyTo)?.text ||
-                                "Deleted Message"}
+                        <div className="flex flex-col items-start">
+                          <div
+                            className={`relative max-w-[65%] p-2.5 rounded-xl flex flex-col transition-all ${
+                              msg.senderId === user.name
+                                ? darkMode
+                                  ? "bg-purple-600 text-white"
+                                  : "bg-purple-300 text-gray-900"
+                                : darkMode
+                                ? "bg-gray-700 text-gray-300"
+                                : "bg-gray-300 text-gray-700"
+                            } ${msg.replyTo ? "ml-4 mr-4" : ""}`}
+                          >
+                            {msg.replyTo && (
+                              <div
+                                className={`text-xs italic mb-1 ${
+                                  darkMode ? "text-gray-400" : "text-gray-500"
+                                } border-l-2 pl-2 ${
+                                  darkMode ? "border-gray-500" : "border-gray-400"
+                                }`}
+                              >
+                                Replying to:{" "}
+                                {messages.find((m) => m._id === msg.replyTo)?.text ||
+                                  "Deleted Message"}
+                              </div>
+                            )}
+                            <div className="flex flex-col w-full">
+                              <span
+                                className={`text-xs font-semibold cursor-pointer ${
+                                  darkMode ? "text-purple-300" : "text-purple-600"
+                                } mb-0.5`}
+                                onClick={() => startPrivateChat(msg.senderId)}
+                                data-tooltip-id={`private-chat-tooltip-${msg._id}`}
+                                data-tooltip-content={`Chat Privately with ${msg.senderId}`}
+                              >
+                                {msg.senderId}
+                              </span>
+                              <span className="text-sm">{msg.text}</span>
+                              <div
+                                className={`text-[10px] mt-0.5 self-${
+                                  msg.senderId === user.name ? "end" : "start"
+                                } ${darkMode ? "text-gray-400" : "text-gray-500"}`}
+                              >
+                                {formatTimestamp(msg.timestamp)}
+                              </div>
                             </div>
-                          )}
-                          <div className="flex flex-col w-full">
-                            <span
-                              className={`text-xs font-semibold cursor-pointer ${
-                                darkMode ? "text-purple-300" : "text-purple-600"
-                              } mb-0.5`}
-                              onClick={() => startPrivateChat(msg.senderId)}
-                              data-tooltip-id={`private-chat-tooltip-${msg._id}`}
-                              data-tooltip-content={`Chat Privately with ${msg.senderId}`}
-                            >
-                              {msg.senderId}
-                            </span>
-                            <span className="text-sm">{msg.text}</span>
                             <div
-                              className={`text-[10px] mt-0.5 self-${
-                                msg.senderId === user.name ? "end" : "start"
-                              } ${darkMode ? "text-gray-400" : "text-gray-500"}`}
-                            >
-                              {formatTimestamp(msg.timestamp)}
-                            </div>
-                          </div>
-                          {(menuOpen === msg._id || (msg._id === menuOpen && window.innerWidth >= 768)) && (
-                            <div
-                              className={`absolute z-30 mt-2 w-32 rounded-lg shadow-lg ${
+                              className={`message-options absolute z-30 mt-2 w-32 rounded-lg shadow-lg ${
                                 msg.senderId === user.name ? "right-0" : "left-0"
                               } ${
                                 darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
                               } border ${
                                 darkMode ? "border-gray-700" : "border-gray-300"
-                              } hidden md:group-hover:block top-full`} // Ensure hover works on desktop
+                              } top-full transition-opacity duration-200 ease-in-out ${
+                                menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"
+                              } md:group-hover:opacity-100 md:group-hover:visible`} // Fixed hover visibility
                             >
                               {msg.senderId === user.name && (
                                 <>
@@ -1781,7 +1782,7 @@ function ChatPage() {
                               </button>
                               <Tooltip id={`reply-tooltip-${msg._id}`} />
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     ))}
