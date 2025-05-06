@@ -26,6 +26,7 @@
 //   const [replyTo, setReplyTo] = useState(null);
 //   const messagesEndRef = useRef(null);
 //   const touchTimeoutRef = useRef(null);
+//   const menuTimeoutRef = useRef(null);
 //   const navigate = useNavigate();
 
 //   useEffect(() => {
@@ -117,6 +118,7 @@
 //       socket.off("privateChatRejected", handlePrivateChatRejected);
 //       socket.disconnect();
 //       if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
+//       if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
 //     };
 //   }, [user?.name, navigate]);
 
@@ -190,7 +192,9 @@
 //   };
 
 //   const toggleMenu = (msgId) => {
-//     setMenuOpen(menuOpen === msgId ? null : msgId);
+//     if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
+//     setMenuOpen(msgId);
+//     menuTimeoutRef.current = setTimeout(() => setMenuOpen(null), 3000);
 //   };
 
 //   const handleTouchStart = (msgId) => {
@@ -199,6 +203,13 @@
 
 //   const handleTouchEnd = () => {
 //     if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
+//   };
+
+//   const handleClickOutside = () => {
+//     if (menuOpen) {
+//       setMenuOpen(null);
+//       if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
+//     }
 //   };
 
 //   const formatTimestamp = (timestamp) => {
@@ -251,7 +262,10 @@
 //   }
 
 //   return (
-//     <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? "bg-gradient-to-br from-gray-900 via-black to-purple-950" : "bg-gradient-to-br from-white via-gray-100 to-purple-100"} transition-all duration-500 relative overflow-hidden`}>
+//     <div
+//       className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? "bg-gradient-to-br from-gray-900 via-black to-purple-950" : "bg-gradient-to-br from-white via-gray-100 to-purple-100"} transition-all duration-500 relative overflow-hidden`}
+//       onClick={handleClickOutside}
+//     >
 //       <div className="absolute inset-0 pointer-events-none">
 //         <div className={`w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse absolute ${darkMode ? "top-10 left-10" : "top-20 right-20"}`}></div>
 //         <div className={`w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse absolute ${darkMode ? "bottom-20 right-20" : "bottom-10 left-10"} delay-1000`}></div>
@@ -510,7 +524,6 @@
 // }
 
 // export default ChatPage;
-
 
 
 import React, { useState, useEffect, useRef } from "react";
@@ -880,7 +893,7 @@ function ChatPage() {
                         onTouchStart={() => handleTouchStart(msg._id)}
                         onTouchEnd={handleTouchEnd}
                       >
-                        <div className={`max-w-[65%] p-2.5 rounded-xl ${msg.senderId === user.name ? (darkMode ? "bg-purple-600 text-white" : "bg-purple-300 text-gray-900") : (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-300 text-gray-700")}`}>
+                        <div className={`max-w-[65%] p-2.5 rounded-xl overflow-wrap break-word ${msg.senderId === user.name ? (darkMode ? "bg-purple-600 text-white" : "bg-purple-300 text-gray-900") : (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-300 text-gray-700")}`}>
                           <div className={`text-xs font-semibold ${darkMode ? "text-gray-400" : "text-gray-600"} mb-1`}>{msg.senderId}</div>
                           {msg.replyTo && (
                             <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"} border-l-2 pl-2 ${darkMode ? "border-gray-500" : "border-gray-400"}`}>
