@@ -1208,28 +1208,26 @@ function ChatPage() {
     return new Date(timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "numeric", hour12: true });
   };
 
+  const formatDate = (timestamp) => {
+    if (!timestamp || isNaN(new Date(timestamp).getTime())) return "";
+    const date = new Date(timestamp);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const groupedMessages = () => {
     const groups = [];
     let currentDate = null;
-    let lastSender = null;
-    let lastTime = null;
 
-    messages.forEach((msg, index) => {
-      const messageDate = new Date(msg.timestamp).toLocaleDateString();
+    messages.forEach((msg) => {
+      const messageDate = formatDate(msg.timestamp);
       if (messageDate !== currentDate) {
         currentDate = messageDate;
         groups.push({ date: messageDate, messages: [] });
-        lastSender = null;
-        lastTime = null;
       }
-
-      const showTimestamp = !lastTime || 
-        lastSender !== msg.senderId || 
-        (new Date(msg.timestamp) - new Date(lastTime)) / 60000 > 1;
-
-      groups[groups.length - 1].messages.push({ ...msg, showTimestamp });
-      lastSender = msg.senderId;
-      lastTime = msg.timestamp;
+      groups[groups.length - 1].messages.push(msg);
     });
 
     return groups;
@@ -1350,23 +1348,23 @@ function ChatPage() {
                     {group.messages.map((msg) => (
                       <div
                         key={msg._id}
-                        className={`flex relative ${msg.senderId === user.name ? "justify-end" : "justify-start"} mb-1`}
+                        className={`flex relative ${msg.senderId === user.name ? "justify-end" : "justify-start"} mb-2 group`}
+                        onContextMenu={(e) => { e.preventDefault(); toggleMenu(msg._id); }}
                         onTouchStart={() => handleTouchStart(msg._id)}
                         onTouchEnd={handleTouchEnd}
                       >
                         <div className={`max-w-[65%] p-2.5 rounded-xl ${msg.senderId === user.name ? (darkMode ? "bg-purple-600 text-white" : "bg-purple-300 text-gray-900") : (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-300 text-gray-700")}`}>
+                          <div className={`text-xs font-semibold ${darkMode ? "text-gray-400" : "text-gray-600"} mb-1`}>{msg.senderId}</div>
                           {msg.replyTo && (
                             <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"} border-l-2 pl-2 ${darkMode ? "border-gray-500" : "border-gray-400"}`}>
                               Replying to: {messages.find(m => m._id === msg.replyTo)?.text || "Deleted Message"}
                             </div>
                           )}
                           <span className="text-sm">{msg.text}</span>
-                          {msg.showTimestamp && (
-                            <div className={`text-[10px] mt-0.5 ${msg.senderId === user.name ? "text-right" : "text-left"} ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-                              {formatTimestamp(msg.timestamp)}
-                            </div>
-                          )}
-                          <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200 ${menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"} md:group-hover:opacity-100 md:group-hover:visible`}>
+                          <div className={`text-[10px] mt-0.5 ${msg.senderId === user.name ? "text-right" : "text-left"} ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                            {formatTimestamp(msg.timestamp)}
+                          </div>
+                          <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200 ${menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"}`}>
                             {msg.senderId === user.name && (
                               <>
                                 <button
