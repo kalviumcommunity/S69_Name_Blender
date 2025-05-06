@@ -1,5 +1,5 @@
 // import React, { useState, useEffect, useRef } from "react";
-// import { Send, Edit2, LogOut, MoreVertical, Moon, Sun, ArrowLeft, Home } from "lucide-react";
+// import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home } from "lucide-react";
 // import io from "socket.io-client";
 // import axios from "axios";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -29,6 +29,7 @@
 //   const [loading, setLoading] = useState(true);
 //   const messagesEndRef = useRef(null);
 //   const typingTimeoutRef = useRef(null);
+//   const touchTimeoutRef = useRef(null);
 //   const navigate = useNavigate();
 
 //   useEffect(() => {
@@ -95,6 +96,9 @@
 //       setIsOnline(false);
 //       if (typingTimeoutRef.current) {
 //         clearTimeout(typingTimeoutRef.current);
+//       }
+//       if (touchTimeoutRef.current) {
+//         clearTimeout(touchTimeoutRef.current);
 //       }
 //     };
 //   }, [recipientId]);
@@ -254,6 +258,18 @@
 //   const handleReply = (msg) => {
 //     setReplyTo(msg);
 //     setMenuOpen(null);
+//   };
+
+//   const handleTouchStart = (msgId) => {
+//     touchTimeoutRef.current = setTimeout(() => {
+//       toggleMenu(msgId);
+//     }, 500); // 500ms hold to show options
+//   };
+
+//   const handleTouchEnd = () => {
+//     if (touchTimeoutRef.current) {
+//       clearTimeout(touchTimeoutRef.current);
+//     }
 //   };
 
 //   const formatTimestamp = (timestamp) => {
@@ -447,12 +463,14 @@
 //                     {group.messages.map((msg) => (
 //                       <div
 //                         key={msg._id}
-//                         className={`flex flex-col ${
+//                         className={`flex flex-col group relative ${
 //                           msg.senderId === user.name ? "items-end" : "items-start"
-//                         } mb-2 group relative`} // Ensure 'group' class for hover effect
+//                         } mb-2`} // Removed 'group' class for hover effect
+//                         onTouchStart={() => handleTouchStart(msg._id)}
+//                         onTouchEnd={handleTouchEnd}
 //                       >
 //                         <div
-//                           className={`max-w-[70%] p-3 rounded-2xl ${
+//                           className={`relative max-w-[60%] p-2 rounded-xl flex flex-col hover:shadow-md transition-all ${
 //                             msg.senderId === user.name
 //                               ? darkMode
 //                                 ? "bg-purple-600 text-white"
@@ -460,9 +478,7 @@
 //                               : darkMode
 //                               ? "bg-gray-700 text-gray-300"
 //                               : "bg-gray-300 text-gray-700"
-//                           } flex flex-col hover:shadow-md transition-all ${
-//                             msg.replyTo ? "ml-4 mr-4" : ""
-//                           }`}
+//                           } ${msg.replyTo ? "ml-4 mr-4" : ""}`}
 //                         >
 //                           {msg.replyTo && (
 //                             <div
@@ -475,58 +491,48 @@
 //                               Replying to: {messages.find((m) => m._id === msg.replyTo)?.text || "Deleted Message"}
 //                             </div>
 //                           )}
-//                           <div className="flex items-start gap-2">
-//                             <div className="flex flex-col w-full">
-//                               <span className={`text-xs font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"} mb-1`}>
-//                                 {msg.senderId}
-//                               </span>
-//                               <span>{msg.text}</span>
+//                           <div className="flex flex-col w-full">
+//                             <span className="text-sm">{msg.text}</span>
+//                             <div
+//                               className={`text-[10px] mt-0.5 self-${
+//                                 msg.senderId === user.name ? "end" : "start"
+//                               } ${darkMode ? "text-gray-400" : "text-gray-500"}`}
+//                             >
+//                               {formatTimestamp(msg.timestamp)}
 //                             </div>
 //                           </div>
-//                           <div className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-//                             {formatTimestamp(msg.timestamp)}
-//                           </div>
-//                           <button
-//                             onClick={() => toggleMenu(msg._id)}
-//                             className={`absolute top-2 right-2 p-1 rounded-full transition-opacity ${
-//                               darkMode
-//                                 ? "text-gray-300 hover:text-purple-300"
-//                                 : "text-gray-700 hover:text-purple-600"
-//                             } opacity-50 group-hover:opacity-100`}
-//                             data-tooltip-id={`menu-tooltip-${msg._id}`}
-//                             data-tooltip-content="Message Options"
-//                           >
-//                             <MoreVertical size={16} />
-//                           </button>
-//                           <Tooltip id={`menu-tooltip-${msg._id}`} />
-//                           {menuOpen === msg._id && (
+//                           {(menuOpen === msg._id || (msg._id === menuOpen && window.innerWidth >= 768)) && (
 //                             <div
-//                               className={`absolute ${
+//                               className={`absolute z-20 mt-2 w-32 rounded-lg shadow-lg ${
 //                                 msg.senderId === user.name ? "right-0" : "left-0"
-//                               } mt-8 w-32 rounded-lg shadow-lg z-20 ${
+//                               } ${
 //                                 darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
-//                               } border ${darkMode ? "border-gray-700" : "border-gray-300"} top-full`} // Ensure dropdown is below the button
+//                               } border ${darkMode ? "border-gray-700" : "border-gray-300"} md:group-hover:block md:hidden top-full`} // Hidden on mobile unless menuOpen, shown on hover for desktop
 //                             >
 //                               {msg.senderId === user.name && (
 //                                 <>
 //                                   <button
 //                                     onClick={() => handleEditMessage(msg._id, prompt("Edit message:", msg.text))}
-//                                     className={`w-full text-left px-4 py-2 hover:${darkMode ? "bg-purple-700" : "bg-purple-200"} flex items-center gap-2`}
+//                                     className={`w-full text-left px-3 py-1.5 text-sm hover:${
+//                                       darkMode ? "bg-purple-700" : "bg-purple-200"
+//                                     } flex items-center gap-2`}
 //                                     data-tooltip-id={`edit-tooltip-${msg._id}`}
 //                                     data-tooltip-content="Edit Message"
 //                                   >
-//                                     <Edit2 size={14} /> Edit
+//                                     <Edit2 size={12} /> Edit
 //                                   </button>
 //                                   <Tooltip id={`edit-tooltip-${msg._id}`} />
 //                                   <button
 //                                     onClick={() => handleDeleteMessage(msg._id)}
-//                                     className={`w-full text-left px-4 py-2 hover:${darkMode ? "bg-red-700" : "bg-red-200"} flex items-center gap-2`}
+//                                     className={`w-full text-left px-3 py-1.5 text-sm hover:${
+//                                       darkMode ? "bg-red-700" : "bg-red-200"
+//                                     } flex items-center gap-2`}
 //                                     data-tooltip-id={`delete-tooltip-${msg._id}`}
 //                                     data-tooltip-content="Delete Message"
 //                                   >
 //                                     <svg
-//                                       width="14"
-//                                       height="14"
+//                                       width="12"
+//                                       height="12"
 //                                       viewBox="0 0 24 24"
 //                                       fill="none"
 //                                       stroke="currentColor"
@@ -546,13 +552,15 @@
 //                               )}
 //                               <button
 //                                 onClick={() => handleReply(msg)}
-//                                 className={`w-full text-left px-4 py-2 hover:${darkMode ? "bg-blue-700" : "bg-blue-200"} flex items-center gap-2`}
+//                                 className={`w-full text-left px-3 py-1.5 text-sm hover:${
+//                                   darkMode ? "bg-blue-700" : "bg-blue-200"
+//                                 } flex items-center gap-2`}
 //                                 data-tooltip-id={`reply-tooltip-${msg._id}`}
 //                                 data-tooltip-content="Reply to Message"
 //                               >
 //                                 <svg
-//                                   width="14"
-//                                   height="14"
+//                                   width="12"
+//                                   height="12"
 //                                   viewBox="0 0 24 24"
 //                                   fill="none"
 //                                   stroke="currentColor"
@@ -570,9 +578,9 @@
 //                         </div>
 //                         {msg.senderId === user.name && msg.seenAt && (
 //                           <div
-//                             className={`text-xs mt-1 ${
+//                             className={`text-[10px] mt-0.5 self-end ${
 //                               darkMode ? "text-gray-500" : "text-gray-400"
-//                             } ${msg.senderId === user.name ? "self-end" : "self-start"}`}
+//                             }`}
 //                           >
 //                             {formatSeenStatus(msg.seenAt)}
 //                           </div>
@@ -960,11 +968,6 @@ function PrivateChatPage() {
     setMenuOpen(menuOpen === msgId ? null : msgId);
   };
 
-  const handleReply = (msg) => {
-    setReplyTo(msg);
-    setMenuOpen(null);
-  };
-
   const handleTouchStart = (msgId) => {
     touchTimeoutRef.current = setTimeout(() => {
       toggleMenu(msgId);
@@ -1128,9 +1131,9 @@ function PrivateChatPage() {
       </div>
 
       <div
-        className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl text-center transition-all duration-300 backdrop-blur-md ${
+        className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl transition-all duration-300 backdrop-blur-md ${
           darkMode ? "bg-gray-900 bg-opacity-30 border border-gray-700" : "bg-gray-200 bg-opacity-80 border border-gray-300"
-        } relative z-10 mt-16`}
+        } relative z-10 mt-16 flex flex-col h-[80vh]`}
       >
         <h1 className={`text-3xl font-bold mb-4 animate-fade-in ${darkMode ? "text-white" : "text-gray-900"}`}>
           💬 Private Chat with {recipientId}
@@ -1150,17 +1153,17 @@ function PrivateChatPage() {
           </div>
         ) : (
           <>
-            <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg flex flex-col gap-2">
+            <div className="flex-1 overflow-y-auto mb-4 p-4 rounded-lg flex flex-col gap-3">
               {loading ? (
-                <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Loading messages...</p>
+                <p className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Loading messages...</p>
               ) : messages.length === 0 ? (
-                <p className={darkMode ? "text-gray-400" : "text-gray-500"}>No private messages yet. Start the conversation!</p>
+                <p className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>No private messages yet. Start the conversation!</p>
               ) : (
                 groupedMessages().map((group, groupIndex) => (
                   <div key={groupIndex} className="mb-4">
-                    <div className="flex items-center justify-center mb-2">
+                    <div className="flex items-center justify-center my-2">
                       <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
-                      <span className={`px-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                      <span className={`px-3 text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                         {group.date}
                       </span>
                       <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
@@ -1168,14 +1171,14 @@ function PrivateChatPage() {
                     {group.messages.map((msg) => (
                       <div
                         key={msg._id}
-                        className={`flex flex-col group relative ${
-                          msg.senderId === user.name ? "items-end" : "items-start"
-                        } mb-2`} // Removed 'group' class for hover effect
+                        className={`flex group relative ${
+                          msg.senderId === user.name ? "justify-end" : "justify-start"
+                        } mb-2`}
                         onTouchStart={() => handleTouchStart(msg._id)}
                         onTouchEnd={handleTouchEnd}
                       >
                         <div
-                          className={`relative max-w-[60%] p-2 rounded-xl flex flex-col hover:shadow-md transition-all ${
+                          className={`relative max-w-[65%] p-2.5 rounded-xl flex flex-col transition-all ${
                             msg.senderId === user.name
                               ? darkMode
                                 ? "bg-purple-600 text-white"
@@ -1208,11 +1211,13 @@ function PrivateChatPage() {
                           </div>
                           {(menuOpen === msg._id || (msg._id === menuOpen && window.innerWidth >= 768)) && (
                             <div
-                              className={`absolute z-20 mt-2 w-32 rounded-lg shadow-lg ${
+                              className={`absolute z-30 mt-2 w-32 rounded-lg shadow-lg ${
                                 msg.senderId === user.name ? "right-0" : "left-0"
                               } ${
                                 darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
-                              } border ${darkMode ? "border-gray-700" : "border-gray-300"} md:group-hover:block md:hidden top-full`} // Hidden on mobile unless menuOpen, shown on hover for desktop
+                              } border ${
+                                darkMode ? "border-gray-700" : "border-gray-300"
+                              } hidden md:group-hover:block top-full`} // Ensure hover works on desktop
                             >
                               {msg.senderId === user.name && (
                                 <>
@@ -1303,7 +1308,7 @@ function PrivateChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-auto">
               <input
                 type="text"
                 placeholder={
