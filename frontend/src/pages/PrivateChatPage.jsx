@@ -334,7 +334,7 @@ function PrivateChatPage() {
       </div>
 
       <div className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl backdrop-blur-md ${darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"} mt-16 flex flex-col h-[80vh]`}>
-        <h3 className={`text-3xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>🔒 Private Chat with {recipientId}</h3>
+        <h3 className={`text-base font-bold mb-4 tracking-wide ${darkMode ? "text-purple-400" : "text-purple-600"}`}>🔒 Private Chat with {recipientId}</h3>
         {!user ? (
           <div className="flex flex-col items-center gap-4">
             <p className={`text-md mb-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Please log in to chat.</p>
