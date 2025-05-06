@@ -23,6 +23,7 @@
 //   const [menuOpen, setMenuOpen] = useState(null);
 //   const [notification, setNotification] = useState(null);
 //   const [privateChatPrompt, setPrivateChatPrompt] = useState(null);
+//   const [privateChatNotification, setPrivateChatNotification] = useState(null);
 //   const [replyTo, setReplyTo] = useState(null);
 //   const messagesEndRef = useRef(null);
 //   const touchTimeoutRef = useRef(null);
@@ -81,8 +82,9 @@
 //       if (recipientId === user?.name) setPrivateChatPrompt({ senderId, recipientId });
 //     };
 //     const handlePrivateChatAccepted = ({ senderId, recipientId }) => {
-//       if (senderId === user?.name || recipientId === user?.name) {
-//         navigate(`/private-chat/${senderId === user?.name ? recipientId : senderId}`);
+//       // Only navigate if the current user is the sender
+//       if (senderId === user?.name) {
+//         navigate(`/private-chat/${recipientId}`);
 //         setPrivateChatPrompt(null);
 //       }
 //     };
@@ -90,6 +92,11 @@
 //       if (senderId === user?.name) {
 //         setNotification({ message: `${recipientId} rejected your request.`, type: "error" });
 //         setTimeout(() => setNotification(null), 5000);
+//       }
+//     };
+//     const handleNotifyPrivateChat = ({ senderId, recipientId }) => {
+//       if (recipientId === user?.name) {
+//         setPrivateChatNotification({ senderId, recipientId });
 //       }
 //     };
 
@@ -105,6 +112,7 @@
 //     socket.on("privateChatRequest", handlePrivateChatRequest);
 //     socket.on("privateChatAccepted", handlePrivateChatAccepted);
 //     socket.on("privateChatRejected", handlePrivateChatRejected);
+//     socket.on("notifyPrivateChat", handleNotifyPrivateChat);
 
 //     return () => {
 //       socket.off("receiveMessage", handleReceiveMessage);
@@ -116,6 +124,7 @@
 //       socket.off("privateChatRequest", handlePrivateChatRequest);
 //       socket.off("privateChatAccepted", handlePrivateChatAccepted);
 //       socket.off("privateChatRejected", handlePrivateChatRejected);
+//       socket.off("notifyPrivateChat", handleNotifyPrivateChat);
 //       socket.disconnect();
 //       if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
 //       if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
@@ -153,6 +162,13 @@
 //   const handleRejectPrivateChat = () => {
 //     socket.emit("rejectPrivateChat", privateChatPrompt);
 //     setPrivateChatPrompt(null);
+//   };
+
+//   const handleNavigateToPrivateChat = () => {
+//     if (privateChatNotification) {
+//       navigate(`/private-chat/${privateChatNotification.senderId}`);
+//       setPrivateChatNotification(null);
+//     }
 //   };
 
 //   const handleTyping = (e) => {
@@ -433,13 +449,17 @@
 //             </div>
 
 //             <div className="flex gap-2 mt-auto">
-//               <input
-//                 type="text"
+//               <textarea
 //                 placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...` : "Type a message..."}
 //                 value={message}
 //                 onChange={handleTyping}
-//                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-//                 className={`flex-1 p-3 rounded-lg border ${darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"} focus:outline-none focus:ring-2 focus:ring-purple-500`}
+//                 onKeyPress={(e) => {
+//                   if (e.key === "Enter" && !e.shiftKey) {
+//                     e.preventDefault();
+//                     handleSendMessage();
+//                   }
+//                 }}
+//                 className={`flex-1 p-3 rounded-lg border resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"} focus:outline-none focus:ring-2 focus:ring-purple-500`}
 //                 disabled={!user}
 //               />
 //               <button
@@ -503,6 +523,26 @@
 //               </button>
 //               <Tooltip id="reject-tooltip" />
 //             </div>
+//           </div>
+//         </div>
+//       )}
+
+//       {privateChatNotification && (
+//         <div className={`fixed top-20 right-6 p-4 rounded-lg shadow-lg max-w-sm ${darkMode ? "bg-gray-800 text-gray-300 border-gray-700" : "bg-white text-gray-700 border-gray-300"} border animate-slide-in`}>
+//           <p>{privateChatNotification.senderId} is in your private chat!</p>
+//           <div className="flex justify-end gap-2 mt-2">
+//             <button
+//               onClick={handleNavigateToPrivateChat}
+//               className={`px-3 py-1 rounded-full ${darkMode ? "bg-green-700 hover:bg-green-600 text-white" : "bg-green-500 hover:bg-green-400 text-white"}`}
+//             >
+//               Go to Chat
+//             </button>
+//             <button
+//               onClick={() => setPrivateChatNotification(null)}
+//               className={`px-3 py-1 rounded-full ${darkMode ? "bg-gray-600 hover:bg-gray-500 text-white" : "bg-gray-300 hover:bg-gray-400 text-gray-900"}`}
+//             >
+//               Dismiss
+//             </button>
 //           </div>
 //         </div>
 //       )}
@@ -593,12 +633,18 @@ function ChatPage() {
     };
 
     const handleUserList = ({ users }) => setUsers(users.filter(u => u !== user?.name));
-    const handleTyping = ({ senderId }) => {
+    const handleTyping = ({ senderId, recipientId }) => {
+      // Ignore typing events meant for private chats (those with a recipientId)
+      if (recipientId) return;
       if (senderId !== user?.name && !typingUsers.includes(senderId)) {
         setTypingUsers((prev) => [...prev, senderId]);
       }
     };
-    const handleStopTyping = ({ senderId }) => setTypingUsers((prev) => prev.filter(u => u !== senderId));
+    const handleStopTyping = ({ senderId, recipientId }) => {
+      // Ignore stopTyping events meant for private chats
+      if (recipientId) return;
+      setTypingUsers((prev) => prev.filter(u => u !== senderId));
+    };
     const handleMessageDeleted = ({ messageId }) => {
       setMessages((prev) => prev.filter(msg => msg._id !== messageId));
       setMenuOpen(null);
@@ -1057,7 +1103,7 @@ function ChatPage() {
 
       {privateChatNotification && (
         <div className={`fixed top-20 right-6 p-4 rounded-lg shadow-lg max-w-sm ${darkMode ? "bg-gray-800 text-gray-300 border-gray-700" : "bg-white text-gray-700 border-gray-300"} border animate-slide-in`}>
-          <p>{privateChatNotification.senderId} is in your private chat!</p>
+          <p>You have a new message from {privateChatNotification.senderId} in your private chat!</p>
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={handleNavigateToPrivateChat}
