@@ -588,7 +588,7 @@ function PrivateChatPage() {
          (msg.senderId === recipientId && msg.recipientId === user?.name)) &&
         !messages.some(m => m._id === msg._id)
       ) {
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => [...prev, { ...msg, reactions: msg.reactions || [] }]);
         setTyping(false);
       }
     };
@@ -660,7 +660,7 @@ function PrivateChatPage() {
       socket.off("stopTyping", handleStopTyping);
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageEdited", handleMessageEdited);
-      socket.on("messageSeen", handleMessageSeen);
+      socket.off("messageSeen", handleMessageSeen);
       socket.off("reactionAdded", handleReactionAdded);
       socket.off("reactionRemoved", handleReactionRemoved);
     };
@@ -722,12 +722,6 @@ function PrivateChatPage() {
 
   const handleAddReaction = (msgId, emoji) => {
     if (!user) return;
-    const existingReaction = messages
-      .find(msg => msg._id === msgId)
-      ?.reactions?.find(r => r.userId === user.name);
-    if (existingReaction) {
-      socket.emit("removeReaction", { messageId: msgId, userId: user.name });
-    }
     socket.emit("addReaction", { messageId: msgId, emoji, userId: user.name });
     setReactionMenuOpen(null);
   };
@@ -749,7 +743,7 @@ function PrivateChatPage() {
 
   const toggleMenu = (msgId) => {
     if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
-    setMenuOpen(msgId);
+    setMenuOpen(menuOpen === msgId ? null : msgId);
     setReactionMenuOpen(null);
     menuTimeoutRef.current = setTimeout(() => setMenuOpen(null), 3000);
   };
@@ -935,18 +929,17 @@ function PrivateChatPage() {
                             {formatTimestamp(msg.timestamp)}
                             {msg.senderId === user.name && (
                               <span className="ml-1">
-                                {msg.seenAt ? <span className="text-bold-blue-400">👀</span> : <span className="text-bold-gray-400">sent</span>}
+                                {msg.seenAt ? <span className="text-blue-400">👀</span> : <span className="text-gray-400">sent</span>}
                               </span>
                             )}
                           </div>
-                          {(msg.reactions?.length > 0) && (
+                          {msg.reactions?.length > 0 && (
                             <div className={`flex gap-2 mt-1 ${msg.senderId === user.name ? "justify-end" : "justify-start"}`}>
-                              {reactionOptions.map(emoji => {
+                              {reactionOptions.map((emoji) => {
                                 const reactors = msg.reactions.filter(r => r.emoji === emoji);
                                 if (reactors.length === 0) return null;
                                 return (
                                   <button
-                                    keylettere
                                     key={emoji}
                                     className={`text-sm px-2 py-1 rounded ${darkMode ? "bg-gray-800" : "bg-gray-200"}`}
                                     onClick={() => handleAddReaction(msg._id, emoji)}
@@ -957,7 +950,7 @@ function PrivateChatPage() {
                                   </button>
                                 );
                               })}
-                              <Tooltip id={`reaction-tooltip-${msg._id}-${emoji}`} />
+                              <Tooltip id={`reaction-tooltip-${msg._id}`} />
                             </div>
                           )}
                           <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200 ${menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"}`}>
@@ -1001,7 +994,6 @@ function PrivateChatPage() {
                               Reply
                             </button>
                             <Tooltip id={`reply-tooltip-${msg._id}`} />
-: true
                             <button
                               onClick={() => toggleReactionMenu(msg._id)}
                               className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-green-700" : "bg-green-200"} flex items-center gap-2`}
