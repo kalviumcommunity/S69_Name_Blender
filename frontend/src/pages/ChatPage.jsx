@@ -963,7 +963,6 @@
 
 
 
-
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Edit2, LogOut, MoreVertical, Moon, Sun, Home, Search } from "lucide-react";
 import io from "socket.io-client";
@@ -1180,9 +1179,9 @@ function ChatPage() {
       socket.off("stopTyping", handleStopTyping);
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageEdited", handleMessageEdited);
-      socket.off("privateChatRequest", handlePrivateChatRequest);
-      socket.off("privateChatAccepted", handlePrivateChatAccepted);
-      socket.off("privateChatRejected", handlePrivateChatRejected);
+      socket.on("privateChatRequest", handlePrivateChatRequest);
+      socket.on("privateChatAccepted", handlePrivateChatAccepted);
+      socket.on("privateChatRejected", handlePrivateChatRejected);
       socket.disconnect();
       clearTimeout(timeoutId);
     };
@@ -1602,7 +1601,7 @@ function ChatPage() {
                         key={msg._id}
                         className={`flex flex-col ${
                           msg.senderId === user.name ? "items-end" : "items-start"
-                        } mb-2`}
+                        } mb-2 group`} // Added 'group' class for hover effects
                       >
                         <div
                           className={`relative max-w-[70%] p-3 rounded-2xl ${
@@ -1613,7 +1612,7 @@ function ChatPage() {
                               : darkMode
                               ? "bg-gray-700 text-gray-300"
                               : "bg-gray-300 text-gray-700"
-                          } flex flex-col group hover:shadow-md transition-all ${
+                          } flex flex-col hover:shadow-md transition-all ${
                             msg.replyTo ? "ml-4 mr-4" : ""
                           }`}
                         >
