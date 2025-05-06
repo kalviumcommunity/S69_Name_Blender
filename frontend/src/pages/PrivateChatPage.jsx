@@ -295,7 +295,7 @@ function PrivateChatPage() {
           </button>
           <Tooltip id="back-tooltip" />
           <span className={`text-lg font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-            Chatting with <span className={`${darkMode ? "text-purple-300" : "text-purple-600"}`}>{recipientId}</span>
+            🔒<span className={`${darkMode ? "text-purple-300" : "text-purple-600"}`}>{recipientId}</span>
           </span>
           <span className={`w-3 h-3 rounded-full ${isOnline ? "bg-green-400" : "bg-red-400"}`}></span>
         </div>
@@ -334,7 +334,7 @@ function PrivateChatPage() {
       </div>
 
       <div className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl backdrop-blur-md ${darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"} mt-16 flex flex-col h-[80vh]`}>
-        <h1 className={`text-3xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>💬 Private Chat with {recipientId}</h1>
+        <h1 className={`text-3xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>🔒 Private Chat with {recipientId}</h1>
         {!user ? (
           <div className="flex flex-col items-center gap-4">
             <p className={`text-md mb-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Please log in to chat.</p>
