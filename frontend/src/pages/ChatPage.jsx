@@ -1057,7 +1057,7 @@ function ChatPage() {
 
       {privateChatNotification && (
         <div className={`fixed top-20 right-6 p-4 rounded-lg shadow-lg max-w-sm ${darkMode ? "bg-gray-800 text-gray-300 border-gray-700" : "bg-white text-gray-700 border-gray-300"} border animate-slide-in`}>
-          <p>You have a new message from {privateChatNotification.senderId} in your private chat!</p>
+          <p>{privateChatNotification.senderId} is in your private chat!</p>
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={handleNavigateToPrivateChat}
