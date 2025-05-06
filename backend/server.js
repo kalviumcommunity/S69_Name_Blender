@@ -276,7 +276,7 @@ privateChatSchema.index({ user1: 1, user2: 1 }, { unique: true });
 const PrivateChatRelationship = mongoose.model("PrivateChatRelationship", privateChatSchema);
 
 mongoose
-  .connect(process.env.DB_URL)
+  .connect(process.env.DB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
@@ -302,9 +302,9 @@ io.on("connection", (socket) => {
 
   socket.on("sendMessage", async ({ senderId, text, timestamp, replyTo }, callback) => {
     try {
-      if (!senderId || !text) throw new Error("Missing fields");
+      if (!senderId || !text) throw new Error("Missing senderId or text");
       const Message = mongoose.model("Message");
-      const message = new Message({ senderId, text, timestamp: timestamp || Date.now(), replyTo });
+      const message = new Message({ senderId, text, timestamp: timestamp || Date.now(), replyTo, reactions: [] });
       await message.save();
       io.emit("receiveMessage", message._doc);
       if (callback) callback({ status: "success" });
@@ -316,13 +316,12 @@ io.on("connection", (socket) => {
 
   socket.on("sendPrivateMessage", async ({ senderId, text, recipientId, isPrivate, replyTo }, callback) => {
     try {
-      if (!senderId || !text || !recipientId) throw new Error("Missing fields");
+      if (!senderId || !text || !recipientId) throw new Error("Missing senderId, text, or recipientId");
       const Message = mongoose.model("Message");
-      const message = new Message({ senderId, text, recipientId, isPrivate: true, timestamp: Date.now(), replyTo });
+      const message = new Message({ senderId, text, recipientId, isPrivate: true, timestamp: Date.now(), replyTo, reactions: [] });
       await message.save();
       socket.to(recipientId).emit("receiveMessage", message._doc);
       socket.emit("receiveMessage", message._doc);
-      // Notify the recipient of the new private message
       socket.to(recipientId).emit("privateMessageNotification", { senderId, recipientId, messageId: message._id });
       if (callback) callback({ status: "success" });
     } catch (err) {
@@ -335,7 +334,10 @@ io.on("connection", (socket) => {
     try {
       const Message = mongoose.model("Message");
       const message = await Message.findById(messageId);
-      if (!message || message.recipientId !== recipientId || !message.isPrivate) return;
+      if (!message || message.recipientId !== recipientId || !message.isPrivate) {
+        socket.emit("error", { message: "Invalid message or unauthorized" });
+        return;
+      }
       message.seenAt = Date.now();
       await message.save();
       io.to(message.senderId).emit("messageSeen", { messageId, seenAt: message.seenAt });
@@ -351,10 +353,8 @@ io.on("connection", (socket) => {
     if (!typingTimestamps[senderId] || now - typingTimestamps[senderId] > 1000) {
       typingTimestamps[senderId] = now;
       if (recipientId) {
-        // For private chat, only send to the recipient
         socket.to(recipientId).emit("typing", { senderId, recipientId });
       } else {
-        // For global chat, broadcast to all except the sender
         socket.broadcast.emit("typing", { senderId });
       }
     }
@@ -364,10 +364,8 @@ io.on("connection", (socket) => {
     if (!senderId) return;
     typingTimestamps[senderId] = Date.now();
     if (recipientId) {
-      // For private chat, only send to the recipient
       socket.to(recipientId).emit("stopTyping", { senderId, recipientId });
     } else {
-      // For global chat, broadcast to all except the sender
       socket.broadcast.emit("stopTyping", { senderId });
     }
   });
@@ -376,7 +374,10 @@ io.on("connection", (socket) => {
     try {
       const Message = mongoose.model("Message");
       const message = await Message.findById(messageId);
-      if (!message || message.senderId !== senderId) return;
+      if (!message || message.senderId !== senderId) {
+        socket.emit("error", { message: "Invalid message or unauthorized" });
+        return;
+      }
       await Message.deleteOne({ _id: messageId });
       io.emit("messageDeleted", { messageId });
     } catch (err) {
@@ -388,7 +389,10 @@ io.on("connection", (socket) => {
     try {
       const Message = mongoose.model("Message");
       const message = await Message.findById(messageId);
-      if (!message || message.senderId !== senderId) return;
+      if (!message || message.senderId !== senderId) {
+        socket.emit("error", { message: "Invalid message or unauthorized" });
+        return;
+      }
       message.text = newText;
       await message.save();
       io.emit("messageEdited", { messageId, newText });
@@ -397,9 +401,59 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("addReaction", async ({ messageId, emoji, userId }) => {
+    try {
+      const Message = mongoose.model("Message");
+      const message = await Message.findById(messageId);
+      if (!message) {
+        socket.emit("error", { message: "Invalid message" });
+        return;
+      }
+      // Remove existing reaction by the same user, if any
+      message.reactions = message.reactions.filter(r => r.userId !== userId);
+      // Add new reaction
+      message.reactions.push({ emoji, userId });
+      await message.save();
+      // Broadcast to sender and recipient (for private messages)
+      if (message.isPrivate) {
+        socket.to(message.senderId).emit("reactionAdded", { messageId, emoji, userId });
+        socket.to(message.recipientId).emit("reactionAdded", { messageId, emoji, userId });
+        socket.emit("reactionAdded", { messageId, emoji, userId });
+      } else {
+        io.emit("reactionAdded", { messageId, emoji, userId });
+      }
+    } catch (err) {
+      socket.emit("error", { message: "Failed to add reaction" });
+    }
+  });
+
+  socket.on("removeReaction", async ({ messageId, userId }) => {
+    try {
+      const Message = mongoose.model("Message");
+      const message = await Message.findById(messageId);
+      if (!message) {
+        socket.emit("error", { message: "Invalid message" });
+        return;
+      }
+      // Remove reaction by the user
+      message.reactions = message.reactions.filter(r => r.userId !== userId);
+      await message.save();
+      // Broadcast to sender and recipient (for private messages)
+      if (message.isPrivate) {
+        socket.to(message.senderId).emit("reactionRemoved", { messageId, userId });
+        socket.to(message.recipientId).emit("reactionRemoved", { messageId, userId });
+        socket.emit("reactionRemoved", { messageId, userId });
+      } else {
+        io.emit("reactionRemoved", { messageId, userId });
+      }
+    } catch (err) {
+      socket.emit("error", { message: "Failed to remove reaction" });
+    }
+  });
+
   socket.on("checkPrivateChatRelationship", async ({ senderId, recipientId }, callback) => {
     try {
-      if (!senderId || !recipientId) throw new Error("Missing fields");
+      if (!senderId || !recipientId) throw new Error("Missing senderId or recipientId");
       const [user1, user2] = [senderId, recipientId].sort();
       const relationship = await PrivateChatRelationship.findOne({ user1, user2 });
       callback({ status: "success", exists: !!relationship });
@@ -418,9 +472,7 @@ io.on("connection", (socket) => {
       const [user1, user2] = [senderId, recipientId].sort();
       const existingRelationship = await PrivateChatRelationship.findOne({ user1, user2 });
       if (existingRelationship) {
-        // Only notify the sender to navigate to the private chat
         socket.emit("privateChatAccepted", { senderId, recipientId });
-        // Notify the recipient with a popup message instead of redirecting
         socket.to(recipientId).emit("notifyPrivateChat", { senderId, recipientId });
         if (callback) callback({ status: "success", message: "Relationship already exists" });
         return;
