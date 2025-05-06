@@ -178,8 +178,10 @@
 //       const [user1, user2] = [senderId, recipientId].sort();
 //       const existingRelationship = await PrivateChatRelationship.findOne({ user1, user2 });
 //       if (existingRelationship) {
+//         // Only notify the sender to navigate to the private chat
 //         socket.emit("privateChatAccepted", { senderId, recipientId });
-//         socket.to(recipientId).emit("privateChatAccepted", { senderId, recipientId });
+//         // Notify the recipient with a popup message instead of redirecting
+//         socket.to(recipientId).emit("notifyPrivateChat", { senderId, recipientId });
 //         if (callback) callback({ status: "success", message: "Relationship already exists" });
 //         return;
 //       }
@@ -226,6 +228,9 @@
 
 // const PORT = process.env.PORT || 3000;
 // server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -317,6 +322,8 @@ io.on("connection", (socket) => {
       await message.save();
       socket.to(recipientId).emit("receiveMessage", message._doc);
       socket.emit("receiveMessage", message._doc);
+      // Notify the recipient of the new private message
+      socket.to(recipientId).emit("privateMessageNotification", { senderId, recipientId, messageId: message._id });
       if (callback) callback({ status: "success" });
     } catch (err) {
       socket.emit("error", { message: "Failed to send private message" });
@@ -344,8 +351,10 @@ io.on("connection", (socket) => {
     if (!typingTimestamps[senderId] || now - typingTimestamps[senderId] > 1000) {
       typingTimestamps[senderId] = now;
       if (recipientId) {
-        socket.to(recipientId).emit("typing", { senderId });
+        // For private chat, only send to the recipient
+        socket.to(recipientId).emit("typing", { senderId, recipientId });
       } else {
+        // For global chat, broadcast to all except the sender
         socket.broadcast.emit("typing", { senderId });
       }
     }
@@ -355,8 +364,10 @@ io.on("connection", (socket) => {
     if (!senderId) return;
     typingTimestamps[senderId] = Date.now();
     if (recipientId) {
-      socket.to(recipientId).emit("stopTyping", { senderId });
+      // For private chat, only send to the recipient
+      socket.to(recipientId).emit("stopTyping", { senderId, recipientId });
     } else {
+      // For global chat, broadcast to all except the sender
       socket.broadcast.emit("stopTyping", { senderId });
     }
   });
