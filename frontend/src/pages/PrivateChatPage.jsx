@@ -404,7 +404,7 @@
 //           </div>
 //         ) : (
 //           <>
-//             <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg">
+//             <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg flex flex-col gap-2">
 //               {loading ? (
 //                 <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Loading messages...</p>
 //               ) : messages.length === 0 ? (
@@ -413,46 +413,58 @@
 //                 messages.map((msg) => (
 //                   <div
 //                     key={msg._id}
-//                     className={`text-left mb-2 p-2 rounded-lg flex justify-between items-center group hover:shadow-md transition-all relative ${
-//                       msg.senderId === user.name
-//                         ? darkMode
-//                           ? "bg-purple-600 bg-opacity-30 text-white"
-//                           : "bg-purple-200 bg-opacity-50 text-gray-900"
-//                         : darkMode
-//                         ? "bg-gray-700 bg-opacity-30 text-gray-300"
-//                         : "bg-gray-300 bg-opacity-50 text-gray-700"
-//                     }`}
+//                     className={`flex ${
+//                       msg.senderId === user.name ? "justify-end" : "justify-start"
+//                     } mb-2`}
 //                   >
-//                     <div>
+//                     <div
+//                       className={`relative max-w-[70%] p-3 rounded-2xl ${
+//                         msg.senderId === user.name
+//                           ? darkMode
+//                             ? "bg-purple-600 text-white"
+//                             : "bg-purple-300 text-gray-900"
+//                           : darkMode
+//                           ? "bg-gray-700 text-gray-300"
+//                           : "bg-gray-300 text-gray-700"
+//                       } flex flex-col group hover:shadow-md transition-all`}
+//                     >
 //                       {msg.replyTo && (
 //                         <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
 //                           Replying to: {messages.find((m) => m._id === msg.replyTo)?.text || "Deleted Message"}
 //                         </div>
 //                       )}
-//                       <span className={`font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"}`}>{msg.senderId}: </span>
-//                       <span>{msg.text}</span>
-//                       <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                       <div className="flex items-start gap-2">
+//                         <div>
+//                           <span className={`font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"}`}>{msg.senderId}: </span>
+//                           <span>{msg.text}</span>
+//                         </div>
+//                         <button
+//                           onClick={() => toggleMenu(msg._id)}
+//                           className={`p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
+//                             darkMode
+//                               ? "text-gray-300 hover:text-purple-300"
+//                               : "text-gray-700 hover:text-purple-600"
+//                           }`}
+//                           data-tooltip-id={`menu-tooltip-${msg._id}`}
+//                           data-tooltip-content="Message Options"
+//                         >
+//                           <MoreVertical size={16} />
+//                         </button>
+//                         <Tooltip id={`menu-tooltip-${msg._id}`} />
+//                       </div>
+//                       <div className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
 //                         {formatTimestamp(msg.timestamp)}
 //                         {msg.senderId === user.name && msg.seenAt && (
 //                           <div>{formatSeenStatus(msg.seenAt)}</div>
 //                         )}
 //                       </div>
-//                     </div>
-//                     <div className="relative">
-//                       <button
-//                         onClick={() => toggleMenu(msg._id)}
-//                         className={`p-1 rounded-full ${darkMode ? "text-gray-300 hover:text-purple-300" : "text-gray-700 hover:text-purple-600"} transition-all`}
-//                         data-tooltip-id={`menu-tooltip-${msg._id}`}
-//                         data-tooltip-content="Message Options"
-//                       >
-//                         <MoreVertical size={16} />
-//                       </button>
-//                       <Tooltip id={`menu-tooltip-${msg._id}`} />
 //                       {menuOpen === msg._id && (
 //                         <div
-//                           className={`absolute right-0 mt-2 w-32 rounded-lg shadow-lg z-20 ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${
-//                             darkMode ? "border-gray-700" : "border-gray-300"
-//                           }`}
+//                           className={`absolute ${
+//                             msg.senderId === user.name ? "right-0" : "left-0"
+//                           } mt-8 w-32 rounded-lg shadow-lg z-20 ${
+//                             darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
+//                           } border ${darkMode ? "border-gray-700" : "border-gray-300"}`}
 //                         >
 //                           {msg.senderId === user.name && (
 //                             <>
@@ -637,8 +649,6 @@
 // }
 
 // export default PrivateChatPage;
-
-
 
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Edit2, LogOut, MoreVertical, Moon, Sun, ArrowLeft, Home } from "lucide-react";
@@ -1055,8 +1065,8 @@ function PrivateChatPage() {
                 messages.map((msg) => (
                   <div
                     key={msg._id}
-                    className={`flex ${
-                      msg.senderId === user.name ? "justify-end" : "justify-start"
+                    className={`flex flex-col ${
+                      msg.senderId === user.name ? "items-end" : "items-start"
                     } mb-2`}
                   >
                     <div
@@ -1076,8 +1086,10 @@ function PrivateChatPage() {
                         </div>
                       )}
                       <div className="flex items-start gap-2">
-                        <div>
-                          <span className={`font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"}`}>{msg.senderId}: </span>
+                        <div className="flex flex-col w-full">
+                          <span className={`text-xs font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"} mb-1`}>
+                            {msg.senderId}
+                          </span>
                           <span>{msg.text}</span>
                         </div>
                         <button
@@ -1096,9 +1108,6 @@ function PrivateChatPage() {
                       </div>
                       <div className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                         {formatTimestamp(msg.timestamp)}
-                        {msg.senderId === user.name && msg.seenAt && (
-                          <div>{formatSeenStatus(msg.seenAt)}</div>
-                        )}
                       </div>
                       {menuOpen === msg._id && (
                         <div
@@ -1169,6 +1178,15 @@ function PrivateChatPage() {
                         </div>
                       )}
                     </div>
+                    {msg.senderId === user.name && msg.seenAt && (
+                      <div
+                        className={`text-xs mt-1 ${
+                          darkMode ? "text-gray-500" : "text-gray-400"
+                        } ${msg.senderId === user.name ? "self-end" : "self-start"}`}
+                      >
+                        {formatSeenStatus(msg.seenAt)}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -1291,3 +1309,4 @@ function PrivateChatPage() {
 }
 
 export default PrivateChatPage;
+
