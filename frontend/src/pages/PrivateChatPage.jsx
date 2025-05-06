@@ -438,13 +438,17 @@
 //             </div>
 
 //             <div className="flex gap-2 mt-auto">
-//               <input
-//                 type="text"
+//               <textarea
 //                 placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...` : "Type a message..."}
 //                 value={message}
 //                 onChange={handleTyping}
-//                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-//                 className={`flex-1 p-3 rounded-lg border ${darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"} focus:outline-none focus:ring-2 focus:ring-purple-500`}
+//                 onKeyPress={(e) => {
+//                   if (e.key === "Enter" && !e.shiftKey) {
+//                     e.preventDefault();
+//                     handleSendMessage();
+//                   }
+//                 }}
+//                 className={`flex-1 p-3 rounded-lg border resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"} focus:outline-none focus:ring-2 focus:ring-purple-500`}
 //                 disabled={!user}
 //               />
 //               <button
@@ -485,6 +489,8 @@
 // }
 
 // export default PrivateChatPage;
+
+
 
 
 import React, { useState, useEffect, useRef } from "react";
@@ -581,16 +587,16 @@ function PrivateChatPage() {
       }
     };
 
-    const handleTyping = ({ senderId }) => {
-      if (senderId === recipientId && senderId !== user?.name) {
+    const handleTyping = ({ senderId, recipientId }) => {
+      if (senderId === recipientId && recipientId === user?.name) {
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         setTyping(true);
         typingTimeoutRef.current = setTimeout(() => setTyping(false), 2000);
       }
     };
 
-    const handleStopTyping = ({ senderId }) => {
-      if (senderId === recipientId && senderId !== user?.name) {
+    const handleStopTyping = ({ senderId, recipientId }) => {
+      if (senderId === recipientId && recipientId === user?.name) {
         setTyping(false);
       }
     };
