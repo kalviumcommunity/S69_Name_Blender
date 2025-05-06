@@ -92,16 +92,16 @@
 //       }
 //     };
 
-//     const handleTyping = ({ senderId }) => {
-//       if (senderId === recipientId && senderId !== user?.name) {
+//     const handleTyping = ({ senderId, recipientId }) => {
+//       if (senderId === recipientId && recipientId === user?.name) {
 //         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 //         setTyping(true);
 //         typingTimeoutRef.current = setTimeout(() => setTyping(false), 2000);
 //       }
 //     };
 
-//     const handleStopTyping = ({ senderId }) => {
-//       if (senderId === recipientId && senderId !== user?.name) {
+//     const handleStopTyping = ({ senderId, recipientId }) => {
+//       if (senderId === recipientId && recipientId === user?.name) {
 //         setTyping(false);
 //       }
 //     };
@@ -492,7 +492,6 @@
 
 
 
-
 import React, { useState, useEffect, useRef } from "react";
 import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home } from "lucide-react";
 import io from "socket.io-client";
@@ -587,17 +586,22 @@ function PrivateChatPage() {
       }
     };
 
-    const handleTyping = ({ senderId, recipientId }) => {
-      if (senderId === recipientId && recipientId === user?.name) {
+    const handleTyping = ({ senderId, recipientId: eventRecipientId }) => {
+      // Show typing indicator if the sender is the other user in the private chat
+      // and the recipient of the event is the current user
+      if (senderId === recipientId && eventRecipientId === user?.name) {
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         setTyping(true);
         typingTimeoutRef.current = setTimeout(() => setTyping(false), 2000);
       }
     };
 
-    const handleStopTyping = ({ senderId, recipientId }) => {
-      if (senderId === recipientId && recipientId === user?.name) {
+    const handleStopTyping = ({ senderId, recipientId: eventRecipientId }) => {
+      // Clear typing indicator if the sender is the other user in the private chat
+      // and the recipient of the event is the current user
+      if (senderId === recipientId && eventRecipientId === user?.name) {
         setTyping(false);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       }
     };
 
