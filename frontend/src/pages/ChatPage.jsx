@@ -1,5 +1,5 @@
 // import React, { useState, useEffect, useRef } from "react";
-// import { Send, Trash2, Edit2, LogOut, MoreVertical, Moon, Sun, Home, Search } from "lucide-react";
+// import { Send, Edit2, LogOut, MoreVertical, Moon, Sun, Home, Search } from "lucide-react";
 // import io from "socket.io-client";
 // import axios from "axios";
 // import { useNavigate } from "react-router-dom";
@@ -21,7 +21,7 @@
 //   const [message, setMessage] = useState("");
 //   const [messages, setMessages] = useState([]);
 //   const [users, setUsers] = useState([]);
-//   const [searchQuery, setSearchQuery] = useState(""); // State for search bar
+//   const [searchQuery, setSearchQuery] = useState("");
 //   const [typingUsers, setTypingUsers] = useState([]);
 //   const [isOnline, setIsOnline] = useState(false);
 //   const [menuOpen, setMenuOpen] = useState(null);
@@ -254,11 +254,9 @@
 //     if (!user?.name || recipientId === user.name || pendingChatRequest) return;
 //     console.log("Checking private chat with:", recipientId);
     
-//     // Check if a private chat relationship exists
 //     socket.emit("checkPrivateChatRelationship", { senderId: user.name, recipientId }, (response) => {
 //       console.log("Check private chat relationship response:", response);
 //       if (response.status === "success" && response.exists) {
-//         // Relationship exists, navigate directly
 //         setNotification({
 //           message: `Opening private chat with ${recipientId}.`,
 //           type: "success",
@@ -266,7 +264,6 @@
 //         setTimeout(() => setNotification(null), 5000);
 //         navigate(`/private-chat/${recipientId}`);
 //       } else {
-//         // No relationship, send request
 //         socket.emit("privateChatRequest", { senderId: user.name, recipientId });
 //         setPendingChatRequest(recipientId);
 //         setNotification({
@@ -378,7 +375,6 @@
 //     }).replace(",", "");
 //   };
 
-//   // Filter users based on search query
 //   const filteredUsers = users.filter((u) =>
 //     u.toLowerCase().includes(searchQuery.toLowerCase())
 //   );
@@ -545,7 +541,6 @@
 //                 >
 //                   Online Users ({filteredUsers.length})
 //                 </p>
-//                 {/* Search Bar */}
 //                 <div className="relative mb-2">
 //                   <input
 //                     type="text"
@@ -669,36 +664,51 @@
 //                           }`}
 //                         >
 //                           {msg.senderId === user.name && (
-//                             <button
-//                               onClick={() =>
-//                                 handleEditMessage(
-//                                   msg._id,
-//                                   prompt("Edit message:", msg.text)
-//                                 )
-//                               }
-//                               className={`w-full text-left px-4 py-2 hover:${
-//                                 darkMode ? "bg-purple-700" : "bg-purple-200"
-//                               } flex items-center gap-2`}
-//                               data-tooltip-id={`edit-tooltip-${msg._id}`}
-//                               data-tooltip-content="Edit Message"
-//                             >
-//                               <Edit2 size={14} /> Edit
-//                             </button>
+//                             <>
+//                               <button
+//                                 onClick={() =>
+//                                   handleEditMessage(
+//                                     msg._id,
+//                                     prompt("Edit message:", msg.text)
+//                                   )
+//                                 }
+//                                 className={`w-full text-left px-4 py-2 hover:${
+//                                   darkMode ? "bg-purple-700" : "bg-purple-200"
+//                                 } flex items-center gap-2`}
+//                                 data-tooltip-id={`edit-tooltip-${msg._id}`}
+//                                 data-tooltip-content="Edit Message"
+//                               >
+//                                 <Edit2 size={14} /> Edit
+//                               </button>
+//                               <Tooltip id={`edit-tooltip-${msg._id}`} />
+//                               <button
+//                                 onClick={() => handleDeleteMessage(msg._id)}
+//                                 className={`w-full text-left px-4 py-2 hover:${
+//                                   darkMode ? "bg-red-700" : "bg-red-200"
+//                                 } flex items-center gap-2`}
+//                                 data-tooltip-id={`delete-tooltip-${msg._id}`}
+//                                 data-tooltip-content="Delete Message"
+//                               >
+//                                 <svg
+//                                   width="14"
+//                                   height="14"
+//                                   viewBox="0 0 24 24"
+//                                   fill="none"
+//                                   stroke="currentColor"
+//                                   strokeWidth="2"
+//                                   strokeLinecap="round"
+//                                   strokeLinejoin="round"
+//                                 >
+//                                   <polyline points="3 6 5 6 21 6"></polyline>
+//                                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+//                                   <line x1="10" y1="11" x2="10" y2="17"></line>
+//                                   <line x1="14" y1="11" x2="14" y2="17"></line>
+//                                 </svg>
+//                                 Delete
+//                               </button>
+//                               <Tooltip id={`delete-tooltip-${msg._id}`} />
+//                             </>
 //                           )}
-//                           {msg.senderId === user.name && (
-//                             <Tooltip id={`edit-tooltip-${msg._id}`} />
-//                           )}
-//                           <button
-//                             onClick={() => handleDeleteMessage(msg._id)}
-//                             className={`w-full text-left px-4 py-2 hover:${
-//                               darkMode ? "bg-red-700" : "bg-red-200"
-//                             } flex items-center gap-2`}
-//                             data-tooltip-id={`delete-tooltip-${msg._id}`}
-//                             data-tooltip-content="Delete Message"
-//                           >
-//                             <Trash2 size={14} /> Delete
-//                           </button>
-//                           <Tooltip id={`delete-tooltip-${msg._id}`} />
 //                           <button
 //                             onClick={() => handleReply(msg)}
 //                             className={`w-full text-left px-4 py-2 hover:${
@@ -1535,7 +1545,7 @@ function ChatPage() {
                 </div>
               </div>
             </div>
-            <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg">
+            <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg flex flex-col gap-2">
               {messages.length === 0 ? (
                 <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
                   No messages yet. Start the conversation!
@@ -1544,17 +1554,21 @@ function ChatPage() {
                 messages.map((msg) => (
                   <div
                     key={msg._id}
-                    className={`text-left mb-2 p-2 rounded-lg flex justify-between items-center group hover:shadow-md transition-all relative ${
-                      msg.senderId === user.name
-                        ? darkMode
-                          ? "bg-purple-600 bg-opacity-30 text-white"
-                          : "bg-purple-200 bg-opacity-50 text-gray-900"
-                        : darkMode
-                        ? "bg-gray-700 bg-opacity-30 text-gray-300"
-                        : "bg-gray-300 bg-opacity-50 text-gray-700"
-                    }`}
+                    className={`flex ${
+                      msg.senderId === user.name ? "justify-end" : "justify-start"
+                    } mb-2`}
                   >
-                    <div>
+                    <div
+                      className={`relative max-w-[70%] p-3 rounded-2xl ${
+                        msg.senderId === user.name
+                          ? darkMode
+                            ? "bg-purple-600 text-white"
+                            : "bg-purple-300 text-gray-900"
+                          : darkMode
+                          ? "bg-gray-700 text-gray-300"
+                          : "bg-gray-300 text-gray-700"
+                      } flex flex-col group hover:shadow-md transition-all`}
+                    >
                       {msg.replyTo && (
                         <div
                           className={`text-xs italic mb-1 ${
@@ -1566,43 +1580,46 @@ function ChatPage() {
                             "Deleted Message"}
                         </div>
                       )}
-                      <span
-                        className={`font-semibold cursor-pointer ${
-                          darkMode ? "text-purple-300" : "text-purple-600"
-                        }`}
-                        onClick={() => startPrivateChat(msg.senderId)}
-                        data-tooltip-id={`private-chat-tooltip-${msg._id}`}
-                        data-tooltip-content={`Chat Privately with ${msg.senderId}`}
-                      >
-                        {msg.senderId}:{" "}
-                      </span>
-                      <Tooltip id={`private-chat-tooltip-${msg._id}`} />
-                      <span>{msg.text}</span>
+                      <div className="flex items-start gap-2">
+                        <div>
+                          <span
+                            className={`font-semibold cursor-pointer ${
+                              darkMode ? "text-purple-300" : "text-purple-600"
+                            }`}
+                            onClick={() => startPrivateChat(msg.senderId)}
+                            data-tooltip-id={`private-chat-tooltip-${msg._id}`}
+                            data-tooltip-content={`Chat Privately with ${msg.senderId}`}
+                          >
+                            {msg.senderId}:{" "}
+                          </span>
+                          <span>{msg.text}</span>
+                        </div>
+                        <button
+                          onClick={() => toggleMenu(msg._id)}
+                          className={`p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
+                            darkMode
+                              ? "text-gray-300 hover:text-purple-300"
+                              : "text-gray-700 hover:text-purple-600"
+                          }`}
+                          data-tooltip-id={`menu-tooltip-${msg._id}`}
+                          data-tooltip-content="Message Options"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                        <Tooltip id={`menu-tooltip-${msg._id}`} />
+                      </div>
                       <div
-                        className={`text-xs ${
+                        className={`text-xs mt-1 ${
                           darkMode ? "text-gray-400" : "text-gray-500"
                         }`}
                       >
                         {formatTimestamp(msg.timestamp)}
                       </div>
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={() => toggleMenu(msg._id)}
-                        className={`p-1 rounded-full ${
-                          darkMode
-                            ? "text-gray-300 hover:text-purple-300"
-                            : "text-gray-700 hover:text-purple-600"
-                        } transition-all`}
-                        data-tooltip-id={`menu-tooltip-${msg._id}`}
-                        data-tooltip-content="Message Options"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      <Tooltip id={`menu-tooltip-${msg._id}`} />
                       {menuOpen === msg._id && (
                         <div
-                          className={`absolute right-0 mt-2 w-32 rounded-lg shadow-lg z-20 ${
+                          className={`absolute ${
+                            msg.senderId === user.name ? "right-0" : "left-0"
+                          } mt-8 w-32 rounded-lg shadow-lg z-20 ${
                             darkMode
                               ? "bg-gray-800 text-white"
                               : "bg-white text-gray-900"
