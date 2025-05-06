@@ -856,7 +856,7 @@ function PrivateChatPage() {
                         onTouchStart={() => handleTouchStart(msg._id)}
                         onTouchEnd={handleTouchEnd}
                       >
-                        <div className={`max-w-[65%] p-2.5 rounded-xl overflow-wrap break-word ${msg.senderId === user.name ? (darkMode ? "bg-purple-600 text-white" : "bg-purple-300 text-gray-900") : (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-300 text-gray-700")}`}>
+                        <div className={`max-w-[65%] p-2.5 rounded-xl overflow-wrap break-word word-break break-all white-space normal overflow-hidden ${msg.senderId === user.name ? (darkMode ? "bg-purple-600 text-white" : "bg-purple-300 text-gray-900") : (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-300 text-gray-700")}`}>
                           {msg.replyTo && (
                             <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"} border-l-2 pl-2 ${darkMode ? "border-gray-500" : "border-gray-400"}`}>
                               Replying to: {messages.find(m => m._id === msg.replyTo)?.text || "Deleted Message"}
