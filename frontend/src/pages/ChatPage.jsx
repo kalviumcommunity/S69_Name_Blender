@@ -588,7 +588,7 @@
 //                 </div>
 //               </div>
 //             </div>
-//             <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg">
+//             <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg flex flex-col gap-2">
 //               {messages.length === 0 ? (
 //                 <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
 //                   No messages yet. Start the conversation!
@@ -597,17 +597,21 @@
 //                 messages.map((msg) => (
 //                   <div
 //                     key={msg._id}
-//                     className={`text-left mb-2 p-2 rounded-lg flex justify-between items-center group hover:shadow-md transition-all relative ${
-//                       msg.senderId === user.name
-//                         ? darkMode
-//                           ? "bg-purple-600 bg-opacity-30 text-white"
-//                           : "bg-purple-200 bg-opacity-50 text-gray-900"
-//                         : darkMode
-//                         ? "bg-gray-700 bg-opacity-30 text-gray-300"
-//                         : "bg-gray-300 bg-opacity-50 text-gray-700"
-//                     }`}
+//                     className={`flex ${
+//                       msg.senderId === user.name ? "justify-end" : "justify-start"
+//                     } mb-2`}
 //                   >
-//                     <div>
+//                     <div
+//                       className={`relative max-w-[70%] p-3 rounded-2xl ${
+//                         msg.senderId === user.name
+//                           ? darkMode
+//                             ? "bg-purple-600 text-white"
+//                             : "bg-purple-300 text-gray-900"
+//                           : darkMode
+//                           ? "bg-gray-700 text-gray-300"
+//                           : "bg-gray-300 text-gray-700"
+//                       } flex flex-col group hover:shadow-md transition-all`}
+//                     >
 //                       {msg.replyTo && (
 //                         <div
 //                           className={`text-xs italic mb-1 ${
@@ -619,43 +623,46 @@
 //                             "Deleted Message"}
 //                         </div>
 //                       )}
-//                       <span
-//                         className={`font-semibold cursor-pointer ${
-//                           darkMode ? "text-purple-300" : "text-purple-600"
-//                         }`}
-//                         onClick={() => startPrivateChat(msg.senderId)}
-//                         data-tooltip-id={`private-chat-tooltip-${msg._id}`}
-//                         data-tooltip-content={`Chat Privately with ${msg.senderId}`}
-//                       >
-//                         {msg.senderId}:{" "}
-//                       </span>
-//                       <Tooltip id={`private-chat-tooltip-${msg._id}`} />
-//                       <span>{msg.text}</span>
+//                       <div className="flex items-start gap-2">
+//                         <div>
+//                           <span
+//                             className={`font-semibold cursor-pointer ${
+//                               darkMode ? "text-purple-300" : "text-purple-600"
+//                             }`}
+//                             onClick={() => startPrivateChat(msg.senderId)}
+//                             data-tooltip-id={`private-chat-tooltip-${msg._id}`}
+//                             data-tooltip-content={`Chat Privately with ${msg.senderId}`}
+//                           >
+//                             {msg.senderId}:{" "}
+//                           </span>
+//                           <span>{msg.text}</span>
+//                         </div>
+//                         <button
+//                           onClick={() => toggleMenu(msg._id)}
+//                           className={`p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
+//                             darkMode
+//                               ? "text-gray-300 hover:text-purple-300"
+//                               : "text-gray-700 hover:text-purple-600"
+//                           }`}
+//                           data-tooltip-id={`menu-tooltip-${msg._id}`}
+//                           data-tooltip-content="Message Options"
+//                         >
+//                           <MoreVertical size={16} />
+//                         </button>
+//                         <Tooltip id={`menu-tooltip-${msg._id}`} />
+//                       </div>
 //                       <div
-//                         className={`text-xs ${
+//                         className={`text-xs mt-1 ${
 //                           darkMode ? "text-gray-400" : "text-gray-500"
 //                         }`}
 //                       >
 //                         {formatTimestamp(msg.timestamp)}
 //                       </div>
-//                     </div>
-//                     <div className="relative">
-//                       <button
-//                         onClick={() => toggleMenu(msg._id)}
-//                         className={`p-1 rounded-full ${
-//                           darkMode
-//                             ? "text-gray-300 hover:text-purple-300"
-//                             : "text-gray-700 hover:text-purple-600"
-//                         } transition-all`}
-//                         data-tooltip-id={`menu-tooltip-${msg._id}`}
-//                         data-tooltip-content="Message Options"
-//                       >
-//                         <MoreVertical size={16} />
-//                       </button>
-//                       <Tooltip id={`menu-tooltip-${msg._id}`} />
 //                       {menuOpen === msg._id && (
 //                         <div
-//                           className={`absolute right-0 mt-2 w-32 rounded-lg shadow-lg z-20 ${
+//                           className={`absolute ${
+//                             msg.senderId === user.name ? "right-0" : "left-0"
+//                           } mt-8 w-32 rounded-lg shadow-lg z-20 ${
 //                             darkMode
 //                               ? "bg-gray-800 text-white"
 //                               : "bg-white text-gray-900"
@@ -953,6 +960,8 @@
 // }
 
 // export default ChatPage;
+
+
 
 
 import React, { useState, useEffect, useRef } from "react";
@@ -1332,6 +1341,34 @@ function ChatPage() {
     }).replace(",", "");
   };
 
+  const formatDateHeader = (timestamp) => {
+    if (!timestamp || isNaN(new Date(timestamp).getTime())) {
+      return "Invalid Date";
+    }
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const groupedMessages = () => {
+    const groups = [];
+    let currentDate = null;
+
+    messages.forEach((msg, index) => {
+      const messageDate = formatDateHeader(msg.timestamp);
+      if (messageDate !== currentDate) {
+        currentDate = messageDate;
+        groups.push({ date: messageDate, messages: [] });
+      }
+      groups[groups.length - 1].messages.push(msg);
+    });
+
+    return groups;
+  };
+
   const filteredUsers = users.filter((u) =>
     u.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -1551,107 +1588,148 @@ function ChatPage() {
                   No messages yet. Start the conversation!
                 </p>
               ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg._id}
-                    className={`flex ${
-                      msg.senderId === user.name ? "justify-end" : "justify-start"
-                    } mb-2`}
-                  >
-                    <div
-                      className={`relative max-w-[70%] p-3 rounded-2xl ${
-                        msg.senderId === user.name
-                          ? darkMode
-                            ? "bg-purple-600 text-white"
-                            : "bg-purple-300 text-gray-900"
-                          : darkMode
-                          ? "bg-gray-700 text-gray-300"
-                          : "bg-gray-300 text-gray-700"
-                      } flex flex-col group hover:shadow-md transition-all`}
-                    >
-                      {msg.replyTo && (
-                        <div
-                          className={`text-xs italic mb-1 ${
-                            darkMode ? "text-gray-400" : "text-gray-500"
-                          }`}
-                        >
-                          Replying to:{" "}
-                          {messages.find((m) => m._id === msg.replyTo)?.text ||
-                            "Deleted Message"}
-                        </div>
-                      )}
-                      <div className="flex items-start gap-2">
-                        <div>
-                          <span
-                            className={`font-semibold cursor-pointer ${
-                              darkMode ? "text-purple-300" : "text-purple-600"
-                            }`}
-                            onClick={() => startPrivateChat(msg.senderId)}
-                            data-tooltip-id={`private-chat-tooltip-${msg._id}`}
-                            data-tooltip-content={`Chat Privately with ${msg.senderId}`}
-                          >
-                            {msg.senderId}:{" "}
-                          </span>
-                          <span>{msg.text}</span>
-                        </div>
-                        <button
-                          onClick={() => toggleMenu(msg._id)}
-                          className={`p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
-                            darkMode
-                              ? "text-gray-300 hover:text-purple-300"
-                              : "text-gray-700 hover:text-purple-600"
-                          }`}
-                          data-tooltip-id={`menu-tooltip-${msg._id}`}
-                          data-tooltip-content="Message Options"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-                        <Tooltip id={`menu-tooltip-${msg._id}`} />
-                      </div>
+                groupedMessages().map((group, groupIndex) => (
+                  <div key={groupIndex} className="mb-4">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
+                      <span className={`px-2 text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                        {group.date}
+                      </span>
+                      <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
+                    </div>
+                    {group.messages.map((msg) => (
                       <div
-                        className={`text-xs mt-1 ${
-                          darkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
+                        key={msg._id}
+                        className={`flex flex-col ${
+                          msg.senderId === user.name ? "items-end" : "items-start"
+                        } mb-2`}
                       >
-                        {formatTimestamp(msg.timestamp)}
-                      </div>
-                      {menuOpen === msg._id && (
                         <div
-                          className={`absolute ${
-                            msg.senderId === user.name ? "right-0" : "left-0"
-                          } mt-8 w-32 rounded-lg shadow-lg z-20 ${
-                            darkMode
-                              ? "bg-gray-800 text-white"
-                              : "bg-white text-gray-900"
-                          } border ${
-                            darkMode ? "border-gray-700" : "border-gray-300"
+                          className={`relative max-w-[70%] p-3 rounded-2xl ${
+                            msg.senderId === user.name
+                              ? darkMode
+                                ? "bg-purple-600 text-white"
+                                : "bg-purple-300 text-gray-900"
+                              : darkMode
+                              ? "bg-gray-700 text-gray-300"
+                              : "bg-gray-300 text-gray-700"
+                          } flex flex-col group hover:shadow-md transition-all ${
+                            msg.replyTo ? "ml-4 mr-4" : ""
                           }`}
                         >
-                          {msg.senderId === user.name && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  handleEditMessage(
-                                    msg._id,
-                                    prompt("Edit message:", msg.text)
-                                  )
-                                }
-                                className={`w-full text-left px-4 py-2 hover:${
-                                  darkMode ? "bg-purple-700" : "bg-purple-200"
-                                } flex items-center gap-2`}
-                                data-tooltip-id={`edit-tooltip-${msg._id}`}
-                                data-tooltip-content="Edit Message"
+                          {msg.replyTo && (
+                            <div
+                              className={`text-xs italic mb-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              } border-l-2 pl-2 ${
+                                darkMode ? "border-gray-500" : "border-gray-400"
+                              }`}
+                            >
+                              Replying to:{" "}
+                              {messages.find((m) => m._id === msg.replyTo)?.text ||
+                                "Deleted Message"}
+                            </div>
+                          )}
+                          <div className="flex items-start gap-2">
+                            <div className="flex flex-col w-full">
+                              <span
+                                className={`text-xs font-semibold cursor-pointer ${
+                                  darkMode ? "text-purple-300" : "text-purple-600"
+                                } mb-1`}
+                                onClick={() => startPrivateChat(msg.senderId)}
+                                data-tooltip-id={`private-chat-tooltip-${msg._id}`}
+                                data-tooltip-content={`Chat Privately with ${msg.senderId}`}
                               >
-                                <Edit2 size={14} /> Edit
-                              </button>
-                              <Tooltip id={`edit-tooltip-${msg._id}`} />
+                                {msg.senderId}
+                              </span>
+                              <span>{msg.text}</span>
+                            </div>
+                            <button
+                              onClick={() => toggleMenu(msg._id)}
+                              className={`p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
+                                darkMode
+                                  ? "text-gray-300 hover:text-purple-300"
+                                  : "text-gray-700 hover:text-purple-600"
+                              }`}
+                              data-tooltip-id={`menu-tooltip-${msg._id}`}
+                              data-tooltip-content="Message Options"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+                            <Tooltip id={`menu-tooltip-${msg._id}`} />
+                          </div>
+                          <div
+                            className={`text-xs mt-1 ${
+                              darkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            {formatTimestamp(msg.timestamp)}
+                          </div>
+                          {menuOpen === msg._id && (
+                            <div
+                              className={`absolute ${
+                                msg.senderId === user.name ? "right-0" : "left-0"
+                              } mt-8 w-32 rounded-lg shadow-lg z-20 ${
+                                darkMode
+                                  ? "bg-gray-800 text-white"
+                                  : "bg-white text-gray-900"
+                              } border ${
+                                darkMode ? "border-gray-700" : "border-gray-300"
+                              }`}
+                            >
+                              {msg.senderId === user.name && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      handleEditMessage(
+                                        msg._id,
+                                        prompt("Edit message:", msg.text)
+                                      )
+                                    }
+                                    className={`w-full text-left px-4 py-2 hover:${
+                                      darkMode ? "bg-purple-700" : "bg-purple-200"
+                                    } flex items-center gap-2`}
+                                    data-tooltip-id={`edit-tooltip-${msg._id}`}
+                                    data-tooltip-content="Edit Message"
+                                  >
+                                    <Edit2 size={14} /> Edit
+                                  </button>
+                                  <Tooltip id={`edit-tooltip-${msg._id}`} />
+                                  <button
+                                    onClick={() => handleDeleteMessage(msg._id)}
+                                    className={`w-full text-left px-4 py-2 hover:${
+                                      darkMode ? "bg-red-700" : "bg-red-200"
+                                    } flex items-center gap-2`}
+                                    data-tooltip-id={`delete-tooltip-${msg._id}`}
+                                    data-tooltip-content="Delete Message"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="3 6 5 6 21 6"></polyline>
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                                    </svg>
+                                    Delete
+                                  </button>
+                                  <Tooltip id={`delete-tooltip-${msg._id}`} />
+                                </>
+                              )}
                               <button
-                                onClick={() => handleDeleteMessage(msg._id)}
+                                onClick={() => handleReply(msg)}
                                 className={`w-full text-left px-4 py-2 hover:${
-                                  darkMode ? "bg-red-700" : "bg-red-200"
+                                  darkMode ? "bg-blue-700" : "bg-blue-200"
                                 } flex items-center gap-2`}
-                                data-tooltip-id={`delete-tooltip-${msg._id}`}
-                                data-tooltip-content="Delete Message"
+                                data-tooltip-id={`reply-tooltip-${msg._id}`}
+                                data-tooltip-content="Reply to Message"
                               >
                                 <svg
                                   width="14"
@@ -1663,42 +1741,16 @@ function ChatPage() {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                 >
-                                  <polyline points="3 6 5 6 21 6"></polyline>
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                                 </svg>
-                                Delete
+                                Reply
                               </button>
-                              <Tooltip id={`delete-tooltip-${msg._id}`} />
-                            </>
+                              <Tooltip id={`reply-tooltip-${msg._id}`} />
+                            </div>
                           )}
-                          <button
-                            onClick={() => handleReply(msg)}
-                            className={`w-full text-left px-4 py-2 hover:${
-                              darkMode ? "bg-blue-700" : "bg-blue-200"
-                            } flex items-center gap-2`}
-                            data-tooltip-id={`reply-tooltip-${msg._id}`}
-                            data-tooltip-content="Reply to Message"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                            </svg>
-                            Reply
-                          </button>
-                          <Tooltip id={`reply-tooltip-${msg._id}`} />
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 ))
               )}
