@@ -7,6 +7,7 @@ const messageSchema = new mongoose.Schema({
   isPrivate: { type: Boolean, default: false },
   timestamp: { type: Date, default: Date.now },
   replyTo: { type: mongoose.Schema.Types.ObjectId, ref: "Message" },
+  seenAt: { type: Date },
 });
 
 module.exports = mongoose.model("Message", messageSchema);
