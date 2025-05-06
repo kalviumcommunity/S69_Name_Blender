@@ -382,7 +382,7 @@ function PrivateChatPage() {
                             {formatTimestamp(msg.timestamp)}
                             {msg.senderId === user.name && (
                               <span className="ml-1">
-                                {msg.seenAt ? <span className="text-bold-blue-400">✓✓</span> : <span className="text-bold-gray-400">✓</span>}
+                                {msg.seenAt ? <span className="text-bold-blue-400">👀</span> : <span className="text-bold-gray-400">sent</span>}
                               </span>
                             )}
                           </div>
