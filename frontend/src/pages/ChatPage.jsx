@@ -964,7 +964,7 @@
 
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Edit2, LogOut, MoreVertical, Moon, Sun, Home, Search } from "lucide-react";
+import { Send, Edit2, LogOut, Moon, Sun, Home, Search } from "lucide-react";
 import io from "socket.io-client";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -995,6 +995,7 @@ function ChatPage() {
   const [pendingChatRequest, setPendingChatRequest] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const messagesEndRef = useRef(null);
+  const touchTimeoutRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -1184,6 +1185,9 @@ function ChatPage() {
       socket.on("privateChatRejected", handlePrivateChatRejected);
       socket.disconnect();
       clearTimeout(timeoutId);
+      if (touchTimeoutRef.current) {
+        clearTimeout(touchTimeoutRef.current);
+      }
     };
   }, [user?.name, navigate]);
 
@@ -1324,6 +1328,18 @@ function ChatPage() {
 
   const toggleMenu = (msgId) => {
     setMenuOpen(menuOpen === msgId ? null : msgId);
+  };
+
+  const handleTouchStart = (msgId) => {
+    touchTimeoutRef.current = setTimeout(() => {
+      toggleMenu(msgId);
+    }, 500); // 500ms hold to show options
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimeoutRef.current) {
+      clearTimeout(touchTimeoutRef.current);
+    }
   };
 
   const formatTimestamp = (timestamp) => {
@@ -1596,12 +1612,14 @@ function ChatPage() {
                     {group.messages.map((msg) => (
                       <div
                         key={msg._id}
-                        className={`flex flex-col ${
+                        className={`flex flex-col group relative ${
                           msg.senderId === user.name ? "items-end" : "items-start"
-                        } mb-2 group relative`} // Ensure 'group' class for hover effect
+                        } mb-2`} // Added 'group' class for hover effect
+                        onTouchStart={() => handleTouchStart(msg._id)}
+                        onTouchEnd={handleTouchEnd}
                       >
                         <div
-                          className={`max-w-[70%] p-3 rounded-2xl ${
+                          className={`relative max-w-[60%] p-2 rounded-xl flex flex-col hover:shadow-md transition-all ${
                             msg.senderId === user.name
                               ? darkMode
                                 ? "bg-purple-600 text-white"
@@ -1609,9 +1627,7 @@ function ChatPage() {
                               : darkMode
                               ? "bg-gray-700 text-gray-300"
                               : "bg-gray-300 text-gray-700"
-                          } flex flex-col hover:shadow-md transition-all ${
-                            msg.replyTo ? "ml-4 mr-4" : ""
-                          }`}
+                          } ${msg.replyTo ? "ml-4 mr-4" : ""}`}
                         >
                           {msg.replyTo && (
                             <div
@@ -1626,52 +1642,35 @@ function ChatPage() {
                                 "Deleted Message"}
                             </div>
                           )}
-                          <div className="flex items-start gap-2">
-                            <div className="flex flex-col w-full">
-                              <span
-                                className={`text-xs font-semibold cursor-pointer ${
-                                  darkMode ? "text-purple-300" : "text-purple-600"
-                                } mb-1`}
-                                onClick={() => startPrivateChat(msg.senderId)}
-                                data-tooltip-id={`private-chat-tooltip-${msg._id}`}
-                                data-tooltip-content={`Chat Privately with ${msg.senderId}`}
-                              >
-                                {msg.senderId}
-                              </span>
-                              <span>{msg.text}</span>
+                          <div className="flex flex-col w-full">
+                            <span
+                              className={`text-xs font-semibold cursor-pointer ${
+                                darkMode ? "text-purple-300" : "text-purple-600"
+                              } mb-0.5`}
+                              onClick={() => startPrivateChat(msg.senderId)}
+                              data-tooltip-id={`private-chat-tooltip-${msg._id}`}
+                              data-tooltip-content={`Chat Privately with ${msg.senderId}`}
+                            >
+                              {msg.senderId}
+                            </span>
+                            <span className="text-sm">{msg.text}</span>
+                            <div
+                              className={`text-[10px] mt-0.5 self-${
+                                msg.senderId === user.name ? "end" : "start"
+                              } ${darkMode ? "text-gray-400" : "text-gray-500"}`}
+                            >
+                              {formatTimestamp(msg.timestamp)}
                             </div>
                           </div>
-                          <div
-                            className={`text-xs mt-1 ${
-                              darkMode ? "text-gray-400" : "text-gray-500"
-                            }`}
-                          >
-                            {formatTimestamp(msg.timestamp)}
-                          </div>
-                          <button
-                            onClick={() => toggleMenu(msg._id)}
-                            className={`absolute top-2 right-2 p-1 rounded-full transition-opacity ${
-                              darkMode
-                                ? "text-gray-300 hover:text-purple-300"
-                                : "text-gray-700 hover:text-purple-600"
-                            } opacity-50 group-hover:opacity-100`}
-                            data-tooltip-id={`menu-tooltip-${msg._id}`}
-                            data-tooltip-content="Message Options"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-                          <Tooltip id={`menu-tooltip-${msg._id}`} />
-                          {menuOpen === msg._id && (
+                          {(menuOpen === msg._id || (msg._id === menuOpen && window.innerWidth >= 768)) && (
                             <div
-                              className={`absolute ${
+                              className={`absolute z-20 mt-2 w-32 rounded-lg shadow-lg ${
                                 msg.senderId === user.name ? "right-0" : "left-0"
-                              } mt-8 w-32 rounded-lg shadow-lg z-20 ${
-                                darkMode
-                                  ? "bg-gray-800 text-white"
-                                  : "bg-white text-gray-900"
+                              } ${
+                                darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
                               } border ${
                                 darkMode ? "border-gray-700" : "border-gray-300"
-                              } top-full`} // Ensure dropdown is below the button
+                              } md:group-hover:block md:hidden top-full`} // Hidden on mobile unless menuOpen, shown on hover for desktop
                             >
                               {msg.senderId === user.name && (
                                 <>
@@ -1682,26 +1681,26 @@ function ChatPage() {
                                         prompt("Edit message:", msg.text)
                                       )
                                     }
-                                    className={`w-full text-left px-4 py-2 hover:${
+                                    className={`w-full text-left px-3 py-1.5 text-sm hover:${
                                       darkMode ? "bg-purple-700" : "bg-purple-200"
                                     } flex items-center gap-2`}
                                     data-tooltip-id={`edit-tooltip-${msg._id}`}
                                     data-tooltip-content="Edit Message"
                                   >
-                                    <Edit2 size={14} /> Edit
+                                    <Edit2 size={12} /> Edit
                                   </button>
                                   <Tooltip id={`edit-tooltip-${msg._id}`} />
                                   <button
                                     onClick={() => handleDeleteMessage(msg._id)}
-                                    className={`w-full text-left px-4 py-2 hover:${
+                                    className={`w-full text-left px-3 py-1.5 text-sm hover:${
                                       darkMode ? "bg-red-700" : "bg-red-200"
                                     } flex items-center gap-2`}
                                     data-tooltip-id={`delete-tooltip-${msg._id}`}
                                     data-tooltip-content="Delete Message"
                                   >
                                     <svg
-                                      width="14"
-                                      height="14"
+                                      width="12"
+                                      height="12"
                                       viewBox="0 0 24 24"
                                       fill="none"
                                       stroke="currentColor"
@@ -1721,15 +1720,15 @@ function ChatPage() {
                               )}
                               <button
                                 onClick={() => handleReply(msg)}
-                                className={`w-full text-left px-4 py-2 hover:${
+                                className={`w-full text-left px-3 py-1.5 text-sm hover:${
                                   darkMode ? "bg-blue-700" : "bg-blue-200"
                                 } flex items-center gap-2`}
                                 data-tooltip-id={`reply-tooltip-${msg._id}`}
                                 data-tooltip-content="Reply to Message"
                               >
                                 <svg
-                                  width="14"
-                                  height="14"
+                                  width="12"
+                                  height="12"
                                   viewBox="0 0 24 24"
                                   fill="none"
                                   stroke="currentColor"
