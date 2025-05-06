@@ -1112,7 +1112,7 @@ function PrivateChatPage() {
                         key={msg._id}
                         className={`flex flex-col ${
                           msg.senderId === user.name ? "items-end" : "items-start"
-                        } mb-2`}
+                        } mb-2 group`} // Added 'group' class for hover effects
                       >
                         <div
                           className={`relative max-w-[70%] p-3 rounded-2xl ${
@@ -1123,7 +1123,7 @@ function PrivateChatPage() {
                               : darkMode
                               ? "bg-gray-700 text-gray-300"
                               : "bg-gray-300 text-gray-700"
-                          } flex flex-col group hover:shadow-md transition-all ${
+                          } flex flex-col hover:shadow-md transition-all ${
                             msg.replyTo ? "ml-4 mr-4" : ""
                           }`}
                         >
