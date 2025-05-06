@@ -371,7 +371,7 @@ function ChatPage() {
           <>
             <h1 className={`text-3xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>🌎Global Chat</h1>
             <div className={`mb-4 text-sm font-medium ${darkMode ? "text-purple-300" : "text-purple-600"}`}>
-              Click on "Online" users to chat privately with them!
+              Click on online users to chat privately with them!
             </div>
             <div className="mb-4">
               <p className={`text-sm mb-2 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Online Users ({users.length})</p>
