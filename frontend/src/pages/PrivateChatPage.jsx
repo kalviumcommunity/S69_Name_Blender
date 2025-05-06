@@ -1,5 +1,5 @@
 // import React, { useState, useEffect, useRef } from "react";
-// import { Send, Trash2, Edit2, LogOut, MoreVertical, Moon, Sun, ArrowLeft, Home } from "lucide-react";
+// import { Send, Edit2, LogOut, MoreVertical, Moon, Sun, ArrowLeft, Home } from "lucide-react";
 // import io from "socket.io-client";
 // import axios from "axios";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -153,11 +153,21 @@
 //       );
 //     };
 
+//     const handleMessageSeen = ({ messageId, seenAt }) => {
+//       console.log("Message seen:", messageId, seenAt);
+//       setMessages((prev) =>
+//         prev.map((msg) =>
+//           msg._id === messageId ? { ...msg, seenAt } : msg
+//         )
+//       );
+//     };
+
 //     socket.on("receiveMessage", handleReceiveMessage);
 //     socket.on("typing", handleTyping);
 //     socket.on("stopTyping", handleStopTyping);
 //     socket.on("messageDeleted", handleMessageDeleted);
 //     socket.on("messageEdited", handleMessageEdited);
+//     socket.on("messageSeen", handleMessageSeen);
 
 //     return () => {
 //       socket.off("receiveMessage", handleReceiveMessage);
@@ -165,8 +175,22 @@
 //       socket.off("stopTyping", handleStopTyping);
 //       socket.off("messageDeleted", handleMessageDeleted);
 //       socket.off("messageEdited", handleMessageEdited);
+//       socket.off("messageSeen", handleMessageSeen);
 //     };
 //   }, [recipientId, user?.name]);
+
+//   useEffect(() => {
+//     messages.forEach((msg) => {
+//       if (
+//         msg.isPrivate &&
+//         msg.recipientId === user?.name &&
+//         msg.senderId === recipientId &&
+//         !msg.seenAt
+//       ) {
+//         socket.emit("markMessageSeen", { messageId: msg._id, recipientId: user.name });
+//       }
+//     });
+//   }, [messages, user?.name, recipientId]);
 
 //   useEffect(() => {
 //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -244,6 +268,23 @@
 //     }).replace(",", "");
 //   };
 
+//   const formatSeenStatus = (seenAt) => {
+//     if (!seenAt || isNaN(new Date(seenAt).getTime())) return "";
+//     const now = Date.now();
+//     const diffMs = now - new Date(seenAt).getTime();
+//     const diffMins = Math.floor(diffMs / 60000);
+    
+//     if (diffMins < 1) return "Seen just now";
+//     if (diffMins === 1) return "Seen 1 min ago";
+//     if (diffMins < 60) return `Seen ${diffMins} mins ago`;
+//     const diffHours = Math.floor(diffMins / 60);
+//     if (diffHours === 1) return "Seen 1 hour ago";
+//     if (diffHours < 24) return `Seen ${diffHours} hours ago`;
+//     const diffDays = Math.floor(diffHours / 24);
+//     if (diffDays === 1) return "Seen 1 day ago";
+//     return `Seen ${diffDays} days ago`;
+//   };
+
 //   if (error) {
 //     return (
 //       <div
@@ -294,7 +335,7 @@
 //             data-tooltip-id="back-tooltip"
 //             data-tooltip-content="Back to Global Chat"
 //           >
-//              <ArrowLeft size={16} />
+//             <ArrowLeft size={16} />
 //           </button>
 //           <Tooltip id="back-tooltip" />
 //           <span className={`text-lg font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
@@ -382,15 +423,20 @@
 //                         : "bg-gray-300 bg-opacity-50 text-gray-700"
 //                     }`}
 //                   >
-//                     {msg.replyTo && (
-//                       <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-//                         Replying to: {messages.find((m) => m._id === msg.replyTo)?.text || "Deleted Message"}
-//                       </div>
-//                     )}
 //                     <div>
+//                       {msg.replyTo && (
+//                         <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                           Replying to: {messages.find((m) => m._id === msg.replyTo)?.text || "Deleted Message"}
+//                         </div>
+//                       )}
 //                       <span className={`font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"}`}>{msg.senderId}: </span>
 //                       <span>{msg.text}</span>
-//                       <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{formatTimestamp(msg.timestamp)}</div>
+//                       <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                         {formatTimestamp(msg.timestamp)}
+//                         {msg.senderId === user.name && msg.seenAt && (
+//                           <div>{formatSeenStatus(msg.seenAt)}</div>
+//                         )}
+//                       </div>
 //                     </div>
 //                     <div className="relative">
 //                       <button
@@ -419,17 +465,32 @@
 //                                 <Edit2 size={14} /> Edit
 //                               </button>
 //                               <Tooltip id={`edit-tooltip-${msg._id}`} />
+//                               <button
+//                                 onClick={() => handleDeleteMessage(msg._id)}
+//                                 className={`w-full text-left px-4 py-2 hover:${darkMode ? "bg-red-700" : "bg-red-200"} flex items-center gap-2`}
+//                                 data-tooltip-id={`delete-tooltip-${msg._id}`}
+//                                 data-tooltip-content="Delete Message"
+//                               >
+//                                 <svg
+//                                   width="14"
+//                                   height="14"
+//                                   viewBox="0 0 24 24"
+//                                   fill="none"
+//                                   stroke="currentColor"
+//                                   strokeWidth="2"
+//                                   strokeLinecap="round"
+//                                   strokeLinejoin="round"
+//                                 >
+//                                   <polyline points="3 6 5 6 21 6"></polyline>
+//                                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+//                                   <line x1="10" y1="11" x2="10" y2="17"></line>
+//                                   <line x1="14" y1="11" x2="14" y2="17"></line>
+//                                 </svg>
+//                                 Delete
+//                               </button>
+//                               <Tooltip id={`delete-tooltip-${msg._id}`} />
 //                             </>
 //                           )}
-//                           <button
-//                             onClick={() => handleDeleteMessage(msg._id)}
-//                             className={`w-full text-left px-4 py-2 hover:${darkMode ? "bg-red-700" : "bg-red-200"} flex items-center gap-2`}
-//                             data-tooltip-id={`delete-tooltip-${msg._id}`}
-//                             data-tooltip-content="Delete Message"
-//                           >
-//                             <Trash2 size={14} /> Delete
-//                           </button>
-//                           <Tooltip id={`delete-tooltip-${msg._id}`} />
 //                           <button
 //                             onClick={() => handleReply(msg)}
 //                             className={`w-full text-left px-4 py-2 hover:${darkMode ? "bg-blue-700" : "bg-blue-200"} flex items-center gap-2`}
@@ -457,24 +518,32 @@
 //                   </div>
 //                 ))
 //               )}
-//               {typing && <div className="text-sm italic text-gray-400 animate-pulse">{recipientId} is typing...</div>}
+//               {typing && (
+//                 <div className="text-sm italic text-gray-400 animate-pulse">
+//                   {recipientId} is typing...
+//                 </div>
+//               )}
 //               <div ref={messagesEndRef} />
 //             </div>
 
 //             <div className="flex gap-2">
 //               <input
 //                 type="text"
-//                 placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...` : "Type a message..."}
+//                 placeholder={
+//                   replyTo
+//                     ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...`
+//                     : "Type a message..."
+//                 }
 //                 value={message}
 //                 onChange={handleTyping}
 //                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-//                 className={`flex-1 p-3 rounded-lg border ${
-//                   darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
-//                 } focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all`}
+//                 className={`flex-1 p-3 rounded-lg border ${darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"} focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all`}
+//                 disabled={!user}
 //               />
 //               <button
 //                 onClick={handleSendMessage}
-//                 className="relative bg-purple-700 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 overflow-hidden group hover:bg-purple-500"
+//                 className={`relative bg-purple-700 text-white font-bold py-3 px-4 rounded-full transition-all duration-300 overflow-hidden group hover:bg-purple-500 ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
+//                 disabled={!user}
 //                 data-tooltip-id="send-tooltip"
 //                 data-tooltip-content="Send Message"
 //               >
@@ -489,7 +558,28 @@
 //         )}
 //       </div>
 
-//       <style jsx>{`
+//       {error && (
+//         <div
+//           className={`fixed top-20 right-6 p-4 rounded-lg shadow-lg max-w-sm ${darkMode ? "bg-red-800 text-red-300 border border-red-700" : "bg-red-100 text-red-700 border border-red-300"} animate-slide-in`}
+//         >
+//           <p>{error}</p>
+//         </div>
+//       )}
+
+//       <style>{`
+//         @keyframes slideIn {
+//           from {
+//             transform: translateX(100%);
+//             opacity: 0;
+//           }
+//           to {
+//             transform: translateX(0);
+//             opacity: 1;
+//           }
+//         }
+//         .animate-slide-in {
+//           animation: slideIn 0.3s ease-out;
+//         }
 //         @keyframes fadeIn {
 //           from {
 //             opacity: 0;
@@ -547,6 +637,7 @@
 // }
 
 // export default PrivateChatPage;
+
 
 
 import React, { useState, useEffect, useRef } from "react";
@@ -955,7 +1046,7 @@ function PrivateChatPage() {
           </div>
         ) : (
           <>
-            <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg">
+            <div className="max-h-64 overflow-y-auto mb-4 p-4 bg-opacity-50 rounded-lg flex flex-col gap-2">
               {loading ? (
                 <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Loading messages...</p>
               ) : messages.length === 0 ? (
@@ -964,46 +1055,58 @@ function PrivateChatPage() {
                 messages.map((msg) => (
                   <div
                     key={msg._id}
-                    className={`text-left mb-2 p-2 rounded-lg flex justify-between items-center group hover:shadow-md transition-all relative ${
-                      msg.senderId === user.name
-                        ? darkMode
-                          ? "bg-purple-600 bg-opacity-30 text-white"
-                          : "bg-purple-200 bg-opacity-50 text-gray-900"
-                        : darkMode
-                        ? "bg-gray-700 bg-opacity-30 text-gray-300"
-                        : "bg-gray-300 bg-opacity-50 text-gray-700"
-                    }`}
+                    className={`flex ${
+                      msg.senderId === user.name ? "justify-end" : "justify-start"
+                    } mb-2`}
                   >
-                    <div>
+                    <div
+                      className={`relative max-w-[70%] p-3 rounded-2xl ${
+                        msg.senderId === user.name
+                          ? darkMode
+                            ? "bg-purple-600 text-white"
+                            : "bg-purple-300 text-gray-900"
+                          : darkMode
+                          ? "bg-gray-700 text-gray-300"
+                          : "bg-gray-300 text-gray-700"
+                      } flex flex-col group hover:shadow-md transition-all`}
+                    >
                       {msg.replyTo && (
                         <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                           Replying to: {messages.find((m) => m._id === msg.replyTo)?.text || "Deleted Message"}
                         </div>
                       )}
-                      <span className={`font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"}`}>{msg.senderId}: </span>
-                      <span>{msg.text}</span>
-                      <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                      <div className="flex items-start gap-2">
+                        <div>
+                          <span className={`font-semibold ${darkMode ? "text-purple-300" : "text-purple-600"}`}>{msg.senderId}: </span>
+                          <span>{msg.text}</span>
+                        </div>
+                        <button
+                          onClick={() => toggleMenu(msg._id)}
+                          className={`p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
+                            darkMode
+                              ? "text-gray-300 hover:text-purple-300"
+                              : "text-gray-700 hover:text-purple-600"
+                          }`}
+                          data-tooltip-id={`menu-tooltip-${msg._id}`}
+                          data-tooltip-content="Message Options"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                        <Tooltip id={`menu-tooltip-${msg._id}`} />
+                      </div>
+                      <div className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                         {formatTimestamp(msg.timestamp)}
                         {msg.senderId === user.name && msg.seenAt && (
                           <div>{formatSeenStatus(msg.seenAt)}</div>
                         )}
                       </div>
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={() => toggleMenu(msg._id)}
-                        className={`p-1 rounded-full ${darkMode ? "text-gray-300 hover:text-purple-300" : "text-gray-700 hover:text-purple-600"} transition-all`}
-                        data-tooltip-id={`menu-tooltip-${msg._id}`}
-                        data-tooltip-content="Message Options"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      <Tooltip id={`menu-tooltip-${msg._id}`} />
                       {menuOpen === msg._id && (
                         <div
-                          className={`absolute right-0 mt-2 w-32 rounded-lg shadow-lg z-20 ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${
-                            darkMode ? "border-gray-700" : "border-gray-300"
-                          }`}
+                          className={`absolute ${
+                            msg.senderId === user.name ? "right-0" : "left-0"
+                          } mt-8 w-32 rounded-lg shadow-lg z-20 ${
+                            darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
+                          } border ${darkMode ? "border-gray-700" : "border-gray-300"}`}
                         >
                           {msg.senderId === user.name && (
                             <>
@@ -1188,6 +1291,3 @@ function PrivateChatPage() {
 }
 
 export default PrivateChatPage;
-
-
-
