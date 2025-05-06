@@ -17,12 +17,12 @@ const messageSchema = new mongoose.Schema({
 });
 
 // TTL index for private messages: expire after 2 hours (7200 seconds)
-messageSchema.index(
-  { timestamp: 1 },
-  {
-    expireAfterSeconds: 7200,
-    partialFilterExpression: { isPrivate: true },
-  }
-);
+// messageSchema.index(
+//   { timestamp: 1 },
+//   {
+//     expireAfterSeconds: 7200,
+//     partialFilterExpression: { isPrivate: true },
+//   }
+// );
 
 module.exports = mongoose.model("Message", messageSchema);
