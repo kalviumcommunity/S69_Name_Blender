@@ -369,7 +369,7 @@ function ChatPage() {
       <div className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl backdrop-blur-md ${darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"} mt-16 flex flex-col h-[80vh]`}>
         {user && (
           <>
-            <h1 className={`text-3xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>💬 Global Chat</h1>
+            <h1 className={`text-3xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>🌎Global Chat</h1>
             <div className={`mb-4 text-sm font-medium ${darkMode ? "text-purple-300" : "text-purple-600"}`}>
               Click a user to chat privately
             </div>
