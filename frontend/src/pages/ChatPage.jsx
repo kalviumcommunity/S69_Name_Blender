@@ -1328,16 +1328,13 @@ function ChatPage() {
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp || isNaN(new Date(timestamp).getTime())) {
-      return "Invalid Date";
+      return "Invalid Time";
     }
-    return new Date(timestamp).toLocaleString("en-US", {
-      month: "numeric",
-      day: "numeric",
-      year: "numeric",
+    return new Date(timestamp).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "numeric",
       hour12: true,
-    }).replace(",", "");
+    });
   };
 
   const formatDateHeader = (timestamp) => {
@@ -1601,10 +1598,10 @@ function ChatPage() {
                         key={msg._id}
                         className={`flex flex-col ${
                           msg.senderId === user.name ? "items-end" : "items-start"
-                        } mb-2 group`} // Added 'group' class for hover effects
+                        } mb-2 group relative`} // Ensure 'group' class for hover effect
                       >
                         <div
-                          className={`relative max-w-[70%] p-3 rounded-2xl ${
+                          className={`max-w-[70%] p-3 rounded-2xl ${
                             msg.senderId === user.name
                               ? darkMode
                                 ? "bg-purple-600 text-white"
@@ -1643,19 +1640,6 @@ function ChatPage() {
                               </span>
                               <span>{msg.text}</span>
                             </div>
-                            <button
-                              onClick={() => toggleMenu(msg._id)}
-                              className={`p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
-                                darkMode
-                                  ? "text-gray-300 hover:text-purple-300"
-                                  : "text-gray-700 hover:text-purple-600"
-                              }`}
-                              data-tooltip-id={`menu-tooltip-${msg._id}`}
-                              data-tooltip-content="Message Options"
-                            >
-                              <MoreVertical size={16} />
-                            </button>
-                            <Tooltip id={`menu-tooltip-${msg._id}`} />
                           </div>
                           <div
                             className={`text-xs mt-1 ${
@@ -1664,6 +1648,19 @@ function ChatPage() {
                           >
                             {formatTimestamp(msg.timestamp)}
                           </div>
+                          <button
+                            onClick={() => toggleMenu(msg._id)}
+                            className={`absolute top-2 right-2 p-1 rounded-full transition-opacity ${
+                              darkMode
+                                ? "text-gray-300 hover:text-purple-300"
+                                : "text-gray-700 hover:text-purple-600"
+                            } opacity-50 group-hover:opacity-100`}
+                            data-tooltip-id={`menu-tooltip-${msg._id}`}
+                            data-tooltip-content="Message Options"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          <Tooltip id={`menu-tooltip-${msg._id}`} />
                           {menuOpen === msg._id && (
                             <div
                               className={`absolute ${
@@ -1674,7 +1671,7 @@ function ChatPage() {
                                   : "bg-white text-gray-900"
                               } border ${
                                 darkMode ? "border-gray-700" : "border-gray-300"
-                              }`}
+                              } top-full`} // Ensure dropdown is below the button
                             >
                               {msg.senderId === user.name && (
                                 <>
