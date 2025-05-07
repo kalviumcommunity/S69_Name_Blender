@@ -345,6 +345,7 @@
 // server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const http = require("http");
@@ -358,6 +359,9 @@ const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
+
+// Handle Render's reverse proxy
+app.set("trust proxy", 1);
 
 // Configure CORS for HTTP requests
 app.use(cors({
@@ -381,9 +385,28 @@ app.use("/api", routes);
 // Serve uploaded audio files
 app.use("/uploads/audios", express.static(path.join(__dirname, "Uploads/audios")));
 
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/chat-app")
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+// MongoDB connection with retry
+const connectMongoDB = async () => {
+  let retries = 5;
+  while (retries) {
+    try {
+      await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/chat-app");
+      console.log("MongoDB connected");
+      break;
+    } catch (err) {
+      console.error("MongoDB connection error:", err.message);
+      retries -= 1;
+      if (retries === 0) {
+        console.error("Max retries reached. Could not connect to MongoDB.");
+        process.exit(1);
+      }
+      console.log(`Retrying MongoDB connection (${retries} attempts left)...`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+    }
+  }
+};
+
+connectMongoDB();
 
 const privateChatUsers = new Map();
 
@@ -534,6 +557,10 @@ io.on("connection", (socket) => {
 // Clean up expired global messages every hour
 cron.schedule("0 * * * *", async () => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      console.log("Skipping global message cleanup: MongoDB not connected");
+      return;
+    }
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     await Message.deleteMany({ isPrivate: false, timestamp: { $lt: twoDaysAgo } });
     console.log("Expired global messages cleaned up");
@@ -545,6 +572,10 @@ cron.schedule("0 * * * *", async () => {
 // Clean up expired private messages and audio files every minute
 cron.schedule("* * * * *", async () => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      console.log("Skipping private message cleanup: MongoDB not connected");
+      return;
+    }
     const now = new Date();
     const expiredMessages = await Message.find({ isPrivate: true, expiresAt: { $lte: now } });
     for (const message of expiredMessages) {
