@@ -352,7 +352,7 @@ const socketIo = require("socket.io");
 const cors = require("cors");
 const routes = require("./routes/routes");
 const cron = require("node-cron");
-const Message = require("./models/Message");
+const Message = require("models/Message");
 const fs = require("fs").promises;
 const path = require("path");
 
