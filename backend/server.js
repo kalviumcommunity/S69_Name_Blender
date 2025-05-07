@@ -345,6 +345,8 @@
 // server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 
+
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -479,7 +481,7 @@ io.on("connection", (socket) => {
     try {
       if (!senderId || !text) throw new Error("Missing senderId or text");
       const Message = mongoose.model("Message");
-      const message = new Message({ senderId, text, timestamp: timestamp || Date.now(), replyTo, reactions: [] });
+      const message = new Message({ senderId, text, timestamp: timestamp || Date.now(), replyTo });
       await message.save();
       io.emit("receiveMessage", message._doc);
       if (callback) callback({ status: "success" });
@@ -493,7 +495,7 @@ io.on("connection", (socket) => {
     try {
       if (!senderId || !text || !recipientId) throw new Error("Missing senderId, text, or recipientId");
       const Message = mongoose.model("Message");
-      const message = new Message({ senderId, text, recipientId, isPrivate: true, timestamp: Date.now(), replyTo, reactions: [] });
+      const message = new Message({ senderId, text, recipientId, isPrivate: true, timestamp: Date.now(), replyTo });
       await message.save();
       socket.to(recipientId).emit("receiveMessage", message._doc);
       socket.emit("receiveMessage", message._doc);
@@ -573,57 +575,6 @@ io.on("connection", (socket) => {
       io.emit("messageEdited", { messageId, newText });
     } catch (err) {
       socket.emit("error", { message: "Failed to edit message" });
-    }
-  });
-
-  socket.on("addReaction", async ({ messageId, emoji, userId }) => {
-    try {
-      const Message = mongoose.model("Message");
-      const message = await Message.findById(messageId);
-      if (!message) {
-        socket.emit("error", { message: "Invalid message" });
-        return;
-      }
-      message.reactions = message.reactions.filter((r) => r.userId !== userId);
-      message.reactions.push({ emoji, userId });
-      await message.save();
-      const updatedMessage = message._doc;
-      if (message.isPrivate) {
-        socket.to(message.senderId).emit("reactionAdded", updatedMessage);
-        socket.to(message.recipientId).emit("reactionAdded", updatedMessage);
-        socket.emit("reactionAdded", updatedMessage);
-      } else {
-        io.emit("reactionAdded", updatedMessage);
-      }
-      console.log("Reaction added:", updatedMessage); // Debug
-    } catch (err) {
-      console.error("Error adding reaction:", err);
-      socket.emit("error", { message: "Failed to add reaction" });
-    }
-  });
-
-  socket.on("removeReaction", async ({ messageId, userId }) => {
-    try {
-      const Message = mongoose.model("Message");
-      const message = await Message.findById(messageId);
-      if (!message) {
-        socket.emit("error", { message: "Invalid message" });
-        return;
-      }
-      message.reactions = message.reactions.filter((r) => r.userId !== userId);
-      await message.save();
-      const updatedMessage = message._doc;
-      if (message.isPrivate) {
-        socket.to(message.senderId).emit("reactionRemoved", updatedMessage);
-        socket.to(message.recipientId).emit("reactionRemoved", updatedMessage);
-        socket.emit("reactionRemoved", updatedMessage);
-      } else {
-        io.emit("reactionRemoved", updatedMessage);
-      }
-      console.log("Reaction removed:", updatedMessage); // Debug
-    } catch (err) {
-      console.error("Error removing reaction:", err);
-      socket.emit("error", { message: "Failed to remove reaction" });
     }
   });
 

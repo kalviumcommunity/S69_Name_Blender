@@ -113,33 +113,6 @@ const Message = require("../models/Message");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const userController = require("../controllers/itemController");
-const multer = require("multer");
-const path = require("path");
-const crypto = require("crypto");
-
-// Configure Multer for audio file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/audios/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const filetypes = /webm|mp3|wav/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    }
-    cb(new Error("Only audio files (webm, mp3, wav) are allowed"));
-  },
-});
 
 router.get("/read", userController.read);
 router.put("/update/:email", userController.update);
@@ -168,10 +141,7 @@ router.get("/private-messages/:sender/:recipient", async (req, res) => {
         { expiresAt: { $exists: false } },
         { expiresAt: { $gt: new Date() } },
       ],
-    })
-      .sort({ timestamp: 1 })
-      .lean();
-    console.log("Fetched private messages:", messages); // Debug
+    }).sort({ timestamp: 1 });
     res.json(messages);
   } catch (err) {
     console.error("Error fetching private messages:", err);
@@ -203,18 +173,5 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", userController.login);
-
-router.post("/upload-audio", upload.single("audio"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No audio file uploaded" });
-    }
-    const audioUrl = `${req.protocol}://${req.get("host")}/uploads/audios/${req.file.filename}`;
-    res.status(200).json({ audioUrl });
-  } catch (err) {
-    console.error("Error uploading audio:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
 
 module.exports = router;

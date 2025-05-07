@@ -596,7 +596,7 @@
 
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home, Smile } from "lucide-react";
+import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home } from "lucide-react";
 import io from "socket.io-client";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
@@ -620,7 +620,6 @@ function PrivateChatPage() {
   const [replyTo, setReplyTo] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [reactionMenuOpen, setReactionMenuOpen] = useState(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const touchTimeoutRef = useRef(null);
@@ -683,10 +682,8 @@ function PrivateChatPage() {
     const handleReceiveMessage = (msg) => {
       if (
         msg.isPrivate &&
-        ((
-          msg.senderId === user?.name && msg.recipientId === recipientId) ||
-         (msg.senderId === recipientId && msg.recipientId === user?.name)
-        ) &&
+        ((msg.senderId === user?.name && msg.recipientId === recipientId) ||
+         (msg.senderId === recipientId && msg.recipientId === user?.name)) &&
         !messages.some((m) => m._id === msg._id)
       ) {
         setMessages((prev) => [...prev, msg]);
@@ -726,39 +723,12 @@ function PrivateChatPage() {
       );
     };
 
-    const handleReactionAdded = (updatedMessage) => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === updatedMessage._id ? { ...msg, reactions: updatedMessage.reactions } : msg
-        )
-      );
-      console.log("Reaction added:", updatedMessage); // Debug
-      setReactionMenuOpen(null);
-    };
-
-    const handleReactionRemoved = (updatedMessage) => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === updatedMessage._id ? { ...msg, reactions: updatedMessage.reactions } : msg
-        )
-      );
-      console.log("Reaction removed:", updatedMessage); // Debug
-      setReactionMenuOpen(null);
-    };
-
     socket.on("receiveMessage", handleReceiveMessage);
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
     socket.on("messageDeleted", handleMessageDeleted);
     socket.on("messageEdited", handleMessageEdited);
     socket.on("messageSeen", handleMessageSeen);
-    socket.on("reactionAdded", handleReactionAdded);
-    socket.on("reactionRemoved", handleReactionRemoved);
-    socket.on("error", (err) => {
-      console.error("Socket error:", err);
-      setError("Failed to process reaction. Please try again.");
-      setTimeout(() => setError(null), 5000);
-    });
 
     return () => {
       socket.off("receiveMessage", handleReceiveMessage);
@@ -767,9 +737,6 @@ function PrivateChatPage() {
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageEdited", handleMessageEdited);
       socket.off("messageSeen", handleMessageSeen);
-      socket.off("reactionAdded", handleReactionAdded);
-      socket.off("reactionRemoved", handleReactionRemoved);
-      socket.off("error");
     };
   }, [recipientId, user?.name]);
 
@@ -794,7 +761,7 @@ function PrivateChatPage() {
     const checkExpiration = () => {
       const now = Date.now();
       const expiringMessages = messages.filter(
-        (msg) => msg.expiresAt && new Date(msg.expiresAt).getTime() - now < 60000 // Within 1 minute
+        (msg) => msg.expiresAt && new Date(msg.expiresAt).getTime() - now < 60000
       );
       if (expiringMessages.length > 0 && !isOnline) {
         setError("Messages will expire soon!");
@@ -802,7 +769,7 @@ function PrivateChatPage() {
       }
     };
 
-    const interval = setInterval(checkExpiration, 30000); // Check every 30 seconds
+    const interval = setInterval(checkExpiration, 30000);
     return () => clearInterval(interval);
   }, [messages, isOnline]);
 
@@ -847,21 +814,6 @@ function PrivateChatPage() {
     setMenuOpen(null);
   };
 
-  const handleAddReaction = (messageId, emoji) => {
-    console.log("Adding reaction:", { messageId, emoji, userId: user.name }); // Debug
-    socket.emit("addReaction", { messageId, emoji, userId: user.name });
-  };
-
-  const handleRemoveReaction = (messageId) => {
-    console.log("Removing reaction:", { messageId, userId: user.name }); // Debug
-    socket.emit("removeReaction", { messageId, userId: user.name });
-  };
-
-  const toggleReactionMenu = (msgId) => {
-    setReactionMenuOpen(reactionMenuOpen === msgId ? null : msgId);
-    setMenuOpen(null);
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("user");
     socket.disconnect();
@@ -874,7 +826,6 @@ function PrivateChatPage() {
   const toggleMenu = (msgId) => {
     if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
     setMenuOpen(msgId);
-    setReactionMenuOpen(null);
     menuTimeoutRef.current = setTimeout(() => setMenuOpen(null), 3000);
   };
 
@@ -887,9 +838,8 @@ function PrivateChatPage() {
   };
 
   const handleClickOutside = () => {
-    if (menuOpen || reactionMenuOpen) {
+    if (menuOpen) {
       setMenuOpen(null);
-      setReactionMenuOpen(null);
       if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
     }
   };
@@ -1016,7 +966,7 @@ function PrivateChatPage() {
             darkMode
               ? "bg-gray-700 hover:bg-gray-600 text-white"
               : "bg-blue-200 hover:bg-blue-300 text-gray-900"
-          }`}
+            }`}
           data-tooltip-id="home-tooltip"
           data-tooltip-content="Go to Homepage"
         >
@@ -1154,32 +1104,6 @@ function PrivateChatPage() {
                               </span>
                             )}
                           </div>
-                          {msg.reactions && msg.reactions.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {msg.reactions.map((reaction) => (
-                                <span
-                                  key={`${reaction.userId}-${reaction.emoji}`}
-                                  className={`text-sm px-1.5 py-0.5 rounded-full cursor-pointer ${
-                                    reaction.userId === user.name
-                                      ? "bg-blue-500/30"
-                                      : "bg-gray-500/30"
-                                  }`}
-                                  onClick={() => {
-                                    console.log("Removing reaction for:", msg._id, reaction.userId);
-                                    reaction.userId === user.name &&
-                                      handleRemoveReaction(msg._id);
-                                  }}
-                                  data-tooltip-id={`reaction-tooltip-${msg._id}-${reaction.userId}`}
-                                  data-tooltip-content={`${reaction.userId}: ${reaction.emoji}`}
-                                >
-                                  {reaction.emoji}
-                                  <Tooltip
-                                    id={`reaction-tooltip-${msg._id}-${reaction.userId}`}
-                                  />
-                                </span>
-                              ))}
-                            </div>
-                          )}
                           <div
                             className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${
                               msg.senderId === user.name ? "right-0" : "left-0"
@@ -1255,39 +1179,7 @@ function PrivateChatPage() {
                               Reply
                             </button>
                             <Tooltip id={`reply-tooltip-${msg._id}`} />
-                            <button
-                              onClick={() => toggleReactionMenu(msg._id)}
-                              className={`w-full text-left px-3 py-1.5 text-sm hover:${
-                                darkMode ? "bg-green-700" : "bg-green-200"
-                              } flex items-center gap-2`}
-                              data-tooltip-id={`reaction-menu-tooltip-${msg._id}`}
-                              data-tooltip-content="Add Reaction"
-                            >
-                              <Smile size={12} /> React
-                            </button>
-                            <Tooltip id={`reaction-menu-tooltip-${msg._id}`} />
                           </div>
-                          {reactionMenuOpen === msg._id && (
-                            <div
-                              className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${
-                                msg.senderId === user.name ? "right-0" : "left-0"
-                              } ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${
-                                darkMode ? "border-gray-700" : "border-gray-300"
-                              } transition-opacity duration-200`}
-                            >
-                              {["😊", "👍", "❤️", "😂", "😢"].map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => handleAddReaction(msg._id, emoji)}
-                                  className={`w-full text-left px-3 py-1.5 text-sm hover:${
-                                    darkMode ? "bg-gray-700" : "bg-gray-200"
-                                  }`}
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
                     ))}
@@ -1368,9 +1260,6 @@ function PrivateChatPage() {
           to { opacity: 1; }
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Color Emoji", sans-serif;
-        }
       `}</style>
     </div>
   );
