@@ -1,5 +1,5 @@
 // import React, { useState, useEffect, useRef } from "react";
-// import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home } from "lucide-react";
+// import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home, Smile } from "lucide-react";
 // import io from "socket.io-client";
 // import axios from "axios";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -23,6 +23,7 @@
 //   const [replyTo, setReplyTo] = useState(null);
 //   const [error, setError] = useState(null);
 //   const [loading, setLoading] = useState(true);
+//   const [reactionMenuOpen, setReactionMenuOpen] = useState(null);
 //   const messagesEndRef = useRef(null);
 //   const typingTimeoutRef = useRef(null);
 //   const touchTimeoutRef = useRef(null);
@@ -46,6 +47,7 @@
 //       setUser(parsedUser);
 //       socket.connect();
 //       socket.emit("join", parsedUser.name, () => setIsOnline(true));
+//       socket.emit("joinPrivateChat", { senderId: parsedUser.name, recipientId });
 
 //       axios
 //         .get(`${import.meta.env.VITE_API_URL}/api/private-messages/${parsedUser.name}/${recipientId}`)
@@ -63,6 +65,7 @@
 //       socket.on("connect", () => {
 //         setIsOnline(true);
 //         socket.emit("join", parsedUser.name);
+//         socket.emit("joinPrivateChat", { senderId: parsedUser.name, recipientId });
 //       });
 //       socket.on("disconnect", () => setIsOnline(false));
 //     } catch {
@@ -93,8 +96,6 @@
 //     };
 
 //     const handleTyping = ({ senderId, recipientId: eventRecipientId }) => {
-//       // Show typing indicator if the sender is the other user in the private chat
-//       // and the recipient of the event is the current user
 //       if (senderId === recipientId && eventRecipientId === user?.name) {
 //         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 //         setTyping(true);
@@ -103,8 +104,6 @@
 //     };
 
 //     const handleStopTyping = ({ senderId, recipientId: eventRecipientId }) => {
-//       // Clear typing indicator if the sender is the other user in the private chat
-//       // and the recipient of the event is the current user
 //       if (senderId === recipientId && eventRecipientId === user?.name) {
 //         setTyping(false);
 //         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -124,12 +123,41 @@
 //       setMessages((prev) => prev.map(msg => msg._id === messageId ? { ...msg, seenAt } : msg));
 //     };
 
+//     const handleReactionAdded = ({ messageId, emoji, userId }) => {
+//       setMessages((prev) =>
+//         prev.map((msg) =>
+//           msg._id === messageId
+//             ? {
+//                 ...msg,
+//                 reactions: msg.reactions
+//                   ? [...msg.reactions.filter((r) => r.userId !== userId), { emoji, userId }]
+//                   : [{ emoji, userId }],
+//               }
+//             : msg
+//         )
+//       );
+//       setReactionMenuOpen(null);
+//     };
+
+//     const handleReactionRemoved = ({ messageId, userId }) => {
+//       setMessages((prev) =>
+//         prev.map((msg) =>
+//           msg._id === messageId
+//             ? { ...msg, reactions: msg.reactions ? msg.reactions.filter((r) => r.userId !== userId) : [] }
+//             : msg
+//         )
+//       );
+//       setReactionMenuOpen(null);
+//     };
+
 //     socket.on("receiveMessage", handleReceiveMessage);
 //     socket.on("typing", handleTyping);
 //     socket.on("stopTyping", handleStopTyping);
 //     socket.on("messageDeleted", handleMessageDeleted);
 //     socket.on("messageEdited", handleMessageEdited);
 //     socket.on("messageSeen", handleMessageSeen);
+//     socket.on("reactionAdded", handleReactionAdded);
+//     socket.on("reactionRemoved", handleReactionRemoved);
 
 //     return () => {
 //       socket.off("receiveMessage", handleReceiveMessage);
@@ -138,6 +166,8 @@
 //       socket.off("messageDeleted", handleMessageDeleted);
 //       socket.off("messageEdited", handleMessageEdited);
 //       socket.off("messageSeen", handleMessageSeen);
+//       socket.off("reactionAdded", handleReactionAdded);
+//       socket.off("reactionRemoved", handleReactionRemoved);
 //     };
 //   }, [recipientId, user?.name]);
 
@@ -152,6 +182,22 @@
 //   useEffect(() => {
 //     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 //   }, [messages]);
+
+//   useEffect(() => {
+//     const checkExpiration = () => {
+//       const now = Date.now();
+//       const expiringMessages = messages.filter(
+//         (msg) => msg.expiresAt && new Date(msg.expiresAt).getTime() - now < 60000 // Within 1 minute
+//       );
+//       if (expiringMessages.length > 0 && !isOnline) {
+//         setError("Messages will expire soon!");
+//         setTimeout(() => setError(null), 5000);
+//       }
+//     };
+
+//     const interval = setInterval(checkExpiration, 30000); // Check every 30 seconds
+//     return () => clearInterval(interval);
+//   }, [messages, isOnline]);
 
 //   const handleSendMessage = () => {
 //     if (!user || !message.trim()) return;
@@ -194,6 +240,19 @@
 //     setMenuOpen(null);
 //   };
 
+//   const handleAddReaction = (messageId, emoji) => {
+//     socket.emit("addReaction", { messageId, emoji, userId: user.name });
+//   };
+
+//   const handleRemoveReaction = (messageId) => {
+//     socket.emit("removeReaction", { messageId, userId: user.name });
+//   };
+
+//   const toggleReactionMenu = (msgId) => {
+//     setReactionMenuOpen(reactionMenuOpen === msgId ? null : msgId);
+//     setMenuOpen(null);
+//   };
+
 //   const handleLogout = () => {
 //     localStorage.removeItem("user");
 //     socket.disconnect();
@@ -206,6 +265,7 @@
 //   const toggleMenu = (msgId) => {
 //     if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
 //     setMenuOpen(msgId);
+//     setReactionMenuOpen(null);
 //     menuTimeoutRef.current = setTimeout(() => setMenuOpen(null), 3000);
 //   };
 
@@ -218,8 +278,9 @@
 //   };
 
 //   const handleClickOutside = () => {
-//     if (menuOpen) {
+//     if (menuOpen || reactionMenuOpen) {
 //       setMenuOpen(null);
+//       setReactionMenuOpen(null);
 //       if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
 //     }
 //   };
@@ -294,8 +355,8 @@
 //             <ArrowLeft size={16} />
 //           </button>
 //           <Tooltip id="back-tooltip" />
-//           <span className={`text-lg font-semibold ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-//             🔒<span className={`${darkMode ? "text-purple-300" : "text-purple-600"}`}>{recipientId}</span>
+//           <span className={`text-base font-bold tracking-wide ${darkMode ? "text-purple-400" : "text-purple-600"}`}>
+//             🔒{recipientId}
 //           </span>
 //           <span className={`w-3 h-3 rounded-full ${isOnline ? "bg-green-400" : "bg-red-400"}`}></span>
 //         </div>
@@ -334,7 +395,6 @@
 //       </div>
 
 //       <div className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl backdrop-blur-md ${darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"} mt-16 flex flex-col h-[80vh]`}>
-//         <h3 className={`text-base font-bold mb-4 tracking-wide ${darkMode ? "text-purple-400" : "text-purple-600"}`}>🔒{recipientId}</h3>
 //         {!user ? (
 //           <div className="flex flex-col items-center gap-4">
 //             <p className={`text-md mb-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Please log in to chat.</p>
@@ -382,10 +442,26 @@
 //                             {formatTimestamp(msg.timestamp)}
 //                             {msg.senderId === user.name && (
 //                               <span className="ml-1">
-//                                 {msg.seenAt ? <span className="text-bold-blue-400">👀</span> : <span className="text-bold-gray-400">sent</span>}
+//                                 {msg.seenAt ? <span className="text-blue-400">👀</span> : <span className="text-gray-400">sent</span>}
 //                               </span>
 //                             )}
 //                           </div>
+//                           {msg.reactions && msg.reactions.length > 0 && (
+//                             <div className="flex flex-wrap gap-1 mt-1">
+//                               {msg.reactions.map((reaction, index) => (
+//                                 <span
+//                                   key={index}
+//                                   className={`text-xs px-1.5 py-0.5 rounded-full cursor-pointer ${reaction.userId === user.name ? "bg-blue-500/30" : "bg-gray-500/30"}`}
+//                                   onClick={() => reaction.userId === user.name && handleRemoveReaction(msg._id)}
+//                                   data-tooltip-id={`reaction-tooltip-${msg._id}-${index}`}
+//                                   data-tooltip-content={`${reaction.userId}: ${reaction.emoji}`}
+//                                 >
+//                                   {reaction.emoji}
+//                                   <Tooltip id={`reaction-tooltip-${msg._id}-${index}`} />
+//                                 </span>
+//                               ))}
+//                             </div>
+//                           )}
 //                           <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200 ${menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"}`}>
 //                             {msg.senderId === user.name && (
 //                               <>
@@ -427,7 +503,29 @@
 //                               Reply
 //                             </button>
 //                             <Tooltip id={`reply-tooltip-${msg._id}`} />
+//                             <button
+//                               onClick={() => toggleReactionMenu(msg._id)}
+//                               className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-green-700" : "bg-green-200"} flex items-center gap-2`}
+//                               data-tooltip-id={`reaction-menu-tooltip-${msg._id}`}
+//                               data-tooltip-content="Add Reaction"
+//                             >
+//                               <Smile size={12} /> React
+//                             </button>
+//                             <Tooltip id={`reaction-menu-tooltip-${msg._id}`} />
 //                           </div>
+//                           {reactionMenuOpen === msg._id && (
+//                             <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200`}>
+//                               {["😊", "👍", "❤️", "😂", "😢"].map((emoji) => (
+//                                 <button
+//                                   key={emoji}
+//                                   onClick={() => handleAddReaction(msg._id, emoji)}
+//                                   className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-gray-700" : "bg-gray-200"}`}
+//                                 >
+//                                   {emoji}
+//                                 </button>
+//                               ))}
+//                             </div>
+//                           )}
 //                         </div>
 //                       </div>
 //                     ))}
@@ -497,7 +595,7 @@
 
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home, Smile } from "lucide-react";
+import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home, Smile, Mic } from "lucide-react";
 import io from "socket.io-client";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
@@ -522,10 +620,14 @@ function PrivateChatPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [reactionMenuOpen, setReactionMenuOpen] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const touchTimeoutRef = useRef(null);
   const menuTimeoutRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -577,6 +679,7 @@ function PrivateChatPage() {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (touchTimeoutRef.current) clearTimeout(touchTimeoutRef.current);
       if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
+      stopRecording();
     };
   }, [recipientId]);
 
@@ -663,7 +766,7 @@ function PrivateChatPage() {
       socket.off("stopTyping", handleStopTyping);
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageEdited", handleMessageEdited);
-      socket.off("messageSeen", handleMessageSeen);
+      socket.on("messageSeen", handleMessageSeen);
       socket.off("reactionAdded", handleReactionAdded);
       socket.off("reactionRemoved", handleReactionRemoved);
     };
@@ -696,6 +799,67 @@ function PrivateChatPage() {
     const interval = setInterval(checkExpiration, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
   }, [messages, isOnline]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        setAudioBlob(audioBlob);
+        // Stop all tracks to release the microphone
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (err) {
+      setError("Failed to access microphone.");
+      console.error("Recording error:", err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleSendVoiceMessage = async () => {
+    if (!user || !audioBlob) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, `voice-message-${Date.now()}.webm`);
+
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-audio`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const audioUrl = response.data.audioUrl;
+      const newMessage = {
+        senderId: user.name,
+        recipientId,
+        isPrivate: true,
+        audioUrl,
+        replyTo: replyTo?._id,
+      };
+
+      socket.emit("sendPrivateMessage", newMessage);
+      setAudioBlob(null);
+      setReplyTo(null);
+    } catch (err) {
+      setError("Failed to upload voice message.");
+      console.error("Upload error:", err);
+    }
+  };
 
   const handleSendMessage = () => {
     if (!user || !message.trim()) return;
@@ -935,7 +1099,16 @@ function PrivateChatPage() {
                               Replying to: {messages.find(m => m._id === msg.replyTo)?.text || "Deleted Message"}
                             </div>
                           )}
-                          <span className="text-sm">{msg.text}</span>
+                          {msg.audioUrl ? (
+                            <div className="flex items-center gap-2">
+                              <audio controls src={msg.audioUrl} className="max-w-full" />
+                              <span className={`text-[10px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                Voice Message
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm">{msg.text}</span>
+                          )}
                           <div className={`text-[10px] mt-0.5 ${msg.senderId === user.name ? "text-right" : "text-left"} ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                             {formatTimestamp(msg.timestamp)}
                             {msg.senderId === user.name && (
@@ -961,7 +1134,7 @@ function PrivateChatPage() {
                             </div>
                           )}
                           <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200 ${menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"}`}>
-                            {msg.senderId === user.name && (
+                            {msg.senderId === user.name && !msg.audioUrl && (
                               <>
                                 <button
                                   onClick={() => handleEditMessage(msg._id, prompt("Edit message:", msg.text))}
@@ -1040,7 +1213,7 @@ function PrivateChatPage() {
 
             <div className="flex gap-2 mt-auto">
               <textarea
-                placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...` : "Type a message..."}
+                placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text?.slice(0, 20) || "Voice Message"}...` : "Type a message..."}
                 value={message}
                 onChange={handleTyping}
                 onKeyPress={(e) => {
@@ -1053,16 +1226,43 @@ function PrivateChatPage() {
                 disabled={!user}
               />
               <button
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`p-3 rounded-full ${isRecording ? "bg-red-600 hover:bg-red-500" : "bg-blue-600 hover:bg-blue-500"} text-white ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
+                disabled={!user}
+                data-tooltip-id="record-tooltip"
+                data-tooltip-content={isRecording ? "Stop Recording" : "Record Voice Message"}
+              >
+                <Mic size={16} />
+              </button>
+              {audioBlob && (
+                <button
+                  onClick={handleSendVoiceMessage}
+                  className={`p-3 rounded-full bg-green-600 hover:bg-green-500 text-white ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
+                  disabled={!user}
+                  data-tooltip-id="send-voice-tooltip"
+                  data-tooltip-content="Send Voice Message"
+                >
+                  <Send size={16} />
+                </button>
+              )}
+              <button
                 onClick={handleSendMessage}
-                className={`p-3 rounded-full bg-purple-700 text-white hover:bg-purple-500 ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`p-3 rounded-full bg-purple-700 hover:bg-purple-500 text-white ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
                 disabled={!user}
                 data-tooltip-id="send-tooltip"
-                data-tooltip-content="Send Message"
+                data-tooltip-content="Send Text Message"
               >
                 <Send size={16} />
               </button>
+              <Tooltip id="record-tooltip" />
+              <Tooltip id="send-voice-tooltip" />
               <Tooltip id="send-tooltip" />
             </div>
+            {audioBlob && (
+              <div className="mt-2">
+                <audio controls src={URL.createObjectURL(audioBlob)} />
+              </div>
+            )}
           </>
         )}
       </div>
