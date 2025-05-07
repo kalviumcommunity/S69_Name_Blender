@@ -358,24 +358,31 @@ const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
+
+// Configure CORS for HTTP requests
+app.use(cors({
+  origin: "https://nameblender.netlify.app",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+}));
+
+// Configure Socket.IO with CORS
 const io = socketIo(server, {
   cors: {
-    origin: "*",
+    origin: "https://nameblender.netlify.app",
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
-app.use(cors());
 app.use(express.json());
 app.use("/api", routes);
 
 // Serve uploaded audio files
-app.use("/uploads/audios", express.static(path.join(__dirname, "uploads/audios")));
+app.use("/uploads/audios", express.static(path.join(__dirname, "Uploads/audios")));
 
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/chat-app", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => console.log("MongoDB connected"))
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/chat-app")
+  .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
 const privateChatUsers = new Map();
@@ -445,7 +452,7 @@ io.on("connection", (socket) => {
         const chatId = [message.senderId, message.recipientId].sort().join(":");
         io.to(chatId).emit("messageDeleted", { messageId });
         if (message.audioUrl) {
-          const audioPath = path.join(__dirname, "uploads/audios", path.basename(message.audioUrl));
+          const audioPath = path.join(__dirname, "Uploads/audios", path.basename(message.audioUrl));
           await fs.unlink(audioPath).catch((err) => console.error("Error deleting audio file:", err));
         }
       }
@@ -542,7 +549,7 @@ cron.schedule("* * * * *", async () => {
     const expiredMessages = await Message.find({ isPrivate: true, expiresAt: { $lte: now } });
     for (const message of expiredMessages) {
       if (message.audioUrl) {
-        const audioPath = path.join(__dirname, "uploads/audios", path.basename(message.audioUrl));
+        const audioPath = path.join(__dirname, "Uploads/audios", path.basename(message.audioUrl));
         await fs.unlink(audioPath).catch((err) => console.error("Error deleting audio file:", err));
       }
     }
