@@ -1,5 +1,5 @@
 // import React, { useState, useEffect, useRef } from "react";
-// import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home, Smile } from "lucide-react";
+// import { Send, Edit2, LogOut, Moon, Sun, ArrowLeft, Home } from "lucide-react";
 // import io from "socket.io-client";
 // import axios from "axios";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -23,7 +23,6 @@
 //   const [replyTo, setReplyTo] = useState(null);
 //   const [error, setError] = useState(null);
 //   const [loading, setLoading] = useState(true);
-//   const [reactionMenuOpen, setReactionMenuOpen] = useState(null);
 //   const messagesEndRef = useRef(null);
 //   const typingTimeoutRef = useRef(null);
 //   const touchTimeoutRef = useRef(null);
@@ -88,7 +87,7 @@
 //         msg.isPrivate &&
 //         ((msg.senderId === user?.name && msg.recipientId === recipientId) ||
 //          (msg.senderId === recipientId && msg.recipientId === user?.name)) &&
-//         !messages.some(m => m._id === msg._id)
+//         !messages.some((m) => m._id === msg._id)
 //       ) {
 //         setMessages((prev) => [...prev, msg]);
 //         setTyping(false);
@@ -111,43 +110,20 @@
 //     };
 
 //     const handleMessageDeleted = ({ messageId }) => {
-//       setMessages((prev) => prev.filter(msg => msg._id !== messageId));
+//       setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
 //       setMenuOpen(null);
 //     };
 
 //     const handleMessageEdited = ({ messageId, newText }) => {
-//       setMessages((prev) => prev.map(msg => msg._id === messageId ? { ...msg, text: newText } : msg));
+//       setMessages((prev) =>
+//         prev.map((msg) => (msg._id === messageId ? { ...msg, text: newText } : msg))
+//       );
 //     };
 
 //     const handleMessageSeen = ({ messageId, seenAt }) => {
-//       setMessages((prev) => prev.map(msg => msg._id === messageId ? { ...msg, seenAt } : msg));
-//     };
-
-//     const handleReactionAdded = ({ messageId, emoji, userId }) => {
 //       setMessages((prev) =>
-//         prev.map((msg) =>
-//           msg._id === messageId
-//             ? {
-//                 ...msg,
-//                 reactions: msg.reactions
-//                   ? [...msg.reactions.filter((r) => r.userId !== userId), { emoji, userId }]
-//                   : [{ emoji, userId }],
-//               }
-//             : msg
-//         )
+//         prev.map((msg) => (msg._id === messageId ? { ...msg, seenAt } : msg))
 //       );
-//       setReactionMenuOpen(null);
-//     };
-
-//     const handleReactionRemoved = ({ messageId, userId }) => {
-//       setMessages((prev) =>
-//         prev.map((msg) =>
-//           msg._id === messageId
-//             ? { ...msg, reactions: msg.reactions ? msg.reactions.filter((r) => r.userId !== userId) : [] }
-//             : msg
-//         )
-//       );
-//       setReactionMenuOpen(null);
 //     };
 
 //     socket.on("receiveMessage", handleReceiveMessage);
@@ -156,8 +132,6 @@
 //     socket.on("messageDeleted", handleMessageDeleted);
 //     socket.on("messageEdited", handleMessageEdited);
 //     socket.on("messageSeen", handleMessageSeen);
-//     socket.on("reactionAdded", handleReactionAdded);
-//     socket.on("reactionRemoved", handleReactionRemoved);
 
 //     return () => {
 //       socket.off("receiveMessage", handleReceiveMessage);
@@ -166,14 +140,17 @@
 //       socket.off("messageDeleted", handleMessageDeleted);
 //       socket.off("messageEdited", handleMessageEdited);
 //       socket.off("messageSeen", handleMessageSeen);
-//       socket.off("reactionAdded", handleReactionAdded);
-//       socket.off("reactionRemoved", handleReactionRemoved);
 //     };
 //   }, [recipientId, user?.name]);
 
 //   useEffect(() => {
 //     messages.forEach((msg) => {
-//       if (msg.isPrivate && msg.recipientId === user?.name && msg.senderId === recipientId && !msg.seenAt) {
+//       if (
+//         msg.isPrivate &&
+//         msg.recipientId === user?.name &&
+//         msg.senderId === recipientId &&
+//         !msg.seenAt
+//       ) {
 //         socket.emit("markMessageSeen", { messageId: msg._id, recipientId: user.name });
 //       }
 //     });
@@ -187,7 +164,7 @@
 //     const checkExpiration = () => {
 //       const now = Date.now();
 //       const expiringMessages = messages.filter(
-//         (msg) => msg.expiresAt && new Date(msg.expiresAt).getTime() - now < 60000 // Within 1 minute
+//         (msg) => msg.expiresAt && new Date(msg.expiresAt).getTime() - now < 60000
 //       );
 //       if (expiringMessages.length > 0 && !isOnline) {
 //         setError("Messages will expire soon!");
@@ -195,7 +172,7 @@
 //       }
 //     };
 
-//     const interval = setInterval(checkExpiration, 30000); // Check every 30 seconds
+//     const interval = setInterval(checkExpiration, 30000);
 //     return () => clearInterval(interval);
 //   }, [messages, isOnline]);
 
@@ -240,19 +217,6 @@
 //     setMenuOpen(null);
 //   };
 
-//   const handleAddReaction = (messageId, emoji) => {
-//     socket.emit("addReaction", { messageId, emoji, userId: user.name });
-//   };
-
-//   const handleRemoveReaction = (messageId) => {
-//     socket.emit("removeReaction", { messageId, userId: user.name });
-//   };
-
-//   const toggleReactionMenu = (msgId) => {
-//     setReactionMenuOpen(reactionMenuOpen === msgId ? null : msgId);
-//     setMenuOpen(null);
-//   };
-
 //   const handleLogout = () => {
 //     localStorage.removeItem("user");
 //     socket.disconnect();
@@ -265,7 +229,6 @@
 //   const toggleMenu = (msgId) => {
 //     if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
 //     setMenuOpen(msgId);
-//     setReactionMenuOpen(null);
 //     menuTimeoutRef.current = setTimeout(() => setMenuOpen(null), 3000);
 //   };
 
@@ -278,16 +241,19 @@
 //   };
 
 //   const handleClickOutside = () => {
-//     if (menuOpen || reactionMenuOpen) {
+//     if (menuOpen) {
 //       setMenuOpen(null);
-//       setReactionMenuOpen(null);
 //       if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
 //     }
 //   };
 
 //   const formatTimestamp = (timestamp) => {
 //     if (!timestamp || isNaN(new Date(timestamp).getTime())) return "";
-//     return new Date(timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "numeric", hour12: true });
+//     return new Date(timestamp).toLocaleTimeString("en-US", {
+//       hour: "numeric",
+//       minute: "numeric",
+//       hour12: true,
+//     });
 //   };
 
 //   const formatDate = (timestamp) => {
@@ -317,12 +283,26 @@
 
 //   if (error) {
 //     return (
-//       <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? "bg-gradient-to-br from-gray-900 via-black to-purple-950" : "bg-gradient-to-br from-white via-gray-100 to-purple-100"}`}>
-//         <div className={`p-6 rounded-2xl shadow-xl max-w-md text-center ${darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"}`}>
+//       <div
+//         className={`min-h-screen flex flex-col items-center justify-center p-6 ${
+//           darkMode
+//             ? "bg-gradient-to-br from-gray-900 via-black to-purple-950"
+//             : "bg-gradient-to-br from-white via-gray-100 to-purple-100"
+//         }`}
+//       >
+//         <div
+//           className={`p-6 rounded-2xl shadow-xl max-w-md text-center ${
+//             darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"
+//           }`}
+//         >
 //           <p className={darkMode ? "text-red-300" : "text-red-500"}>{error}</p>
 //           <button
 //             onClick={() => navigate("/login")}
-//             className={`mt-4 px-4 py-2 rounded-full ${darkMode ? "bg-purple-700 hover:bg-purple-600 text-white" : "bg-purple-500 hover:bg-purple-400 text-white"}`}
+//             className={`mt-4 px-4 py-2 rounded-full ${
+//               darkMode
+//                 ? "bg-purple-700 hover:bg-purple-600 text-white"
+//                 : "bg-purple-500 hover:bg-purple-400 text-white"
+//             }`}
 //             data-tooltip-id="login-tooltip"
 //             data-tooltip-content="Go to Login Page"
 //           >
@@ -336,26 +316,46 @@
 
 //   return (
 //     <div
-//       className={`min-h-screen flex flex-col items-center justify-center p-6 ${darkMode ? "bg-gradient-to-br from-gray-900 via-black to-purple-950" : "bg-gradient-to-br from-white via-gray-100 to-purple-100"} transition-all duration-500 relative overflow-hidden`}
+//       className={`min-h-screen flex flex-col items-center justify-center p-6 ${
+//         darkMode
+//           ? "bg-gradient-to-br from-gray-900 via-black to-purple-950"
+//           : "bg-gradient-to-br from-white via-gray-100 to-purple-100"
+//       } transition-all duration-500 relative overflow-hidden`}
 //       onClick={handleClickOutside}
 //     >
 //       <div className="absolute inset-0 pointer-events-none">
-//         <div className={`w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse absolute ${darkMode ? "top-10 left-10" : "top-20 right-20"}`}></div>
-//         <div className={`w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse absolute ${darkMode ? "bottom-20 right-20" : "bottom-10 left-10"} delay-1000`}></div>
+//         <div
+//           className={`w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse absolute ${
+//             darkMode ? "top-10 left-10" : "top-20 right-20"
+//           }`}
+//         ></div>
+//         <div
+//           className={`w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse absolute ${
+//             darkMode ? "bottom-20 right-20" : "bottom-10 left-10"
+//           } delay-1000`}
+//         ></div>
 //       </div>
 
 //       {user && (
 //         <div className="fixed top-4 left-6 z-20 flex items-center gap-2">
 //           <button
 //             onClick={() => navigate("/ChatPage")}
-//             className={`p-2 rounded-full ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-blue-200 hover:bg-blue-300 text-gray-900"}`}
+//             className={`p-2 rounded-full ${
+//               darkMode
+//                 ? "bg-gray-700 hover:bg-gray-600 text-white"
+//                 : "bg-blue-200 hover:bg-blue-300 text-gray-900"
+//             }`}
 //             data-tooltip-id="back-tooltip"
 //             data-tooltip-content="Back to Global Chat"
 //           >
 //             <ArrowLeft size={16} />
 //           </button>
 //           <Tooltip id="back-tooltip" />
-//           <span className={`text-base font-bold tracking-wide ${darkMode ? "text-purple-400" : "text-purple-600"}`}>
+//           <span
+//             className={`text-base font-bold tracking-wide ${
+//               darkMode ? "text-purple-400" : "text-purple-600"
+//             }`}
+//           >
 //             🔒{recipientId}
 //           </span>
 //           <span className={`w-3 h-3 rounded-full ${isOnline ? "bg-green-400" : "bg-red-400"}`}></span>
@@ -365,7 +365,11 @@
 //       <div className="fixed top-4 right-10 z-20 flex gap-4">
 //         <button
 //           onClick={() => navigate("/homePage")}
-//           className={`p-2 rounded-full ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-blue-200 hover:bg-blue-300 text-gray-900"}`}
+//           className={`p-2 rounded-full ${
+//             darkMode
+//               ? "bg-gray-700 hover:bg-gray-600 text-white"
+//               : "bg-blue-200 hover:bg-blue-300 text-gray-900"
+//             }`}
 //           data-tooltip-id="home-tooltip"
 //           data-tooltip-content="Go to Homepage"
 //         >
@@ -374,7 +378,11 @@
 //         <Tooltip id="home-tooltip" />
 //         <button
 //           onClick={() => setDarkMode(!darkMode)}
-//           className={`p-2 rounded-full ${darkMode ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-yellow-200 hover:bg-yellow-300 text-gray-900"}`}
+//           className={`p-2 rounded-full ${
+//             darkMode
+//               ? "bg-gray-700 hover:bg-gray-600 text-white"
+//               : "bg-yellow-200 hover:bg-yellow-300 text-gray-900"
+//           }`}
 //           data-tooltip-id="mode-tooltip"
 //           data-tooltip-content={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
 //         >
@@ -384,7 +392,9 @@
 //         {user && (
 //           <button
 //             onClick={handleLogout}
-//             className={`p-2 rounded-full ${darkMode ? "bg-red-600 hover:bg-red-500" : "bg-red-400 hover:bg-red-300"}`}
+//             className={`p-2 rounded-full ${
+//               darkMode ? "bg-red-600 hover:bg-red-500" : "bg-red-400 hover:bg-red-300"
+//             }`}
 //             data-tooltip-id="logout-tooltip"
 //             data-tooltip-content="Log Out"
 //           >
@@ -394,13 +404,23 @@
 //         <Tooltip id="logout-tooltip" />
 //       </div>
 
-//       <div className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl backdrop-blur-md ${darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"} mt-16 flex flex-col h-[80vh]`}>
+//       <div
+//         className={`p-6 rounded-2xl shadow-xl w-full max-w-2xl backdrop-blur-md ${
+//           darkMode ? "bg-gray-900/30 border-gray-700" : "bg-gray-200/80 border-gray-300"
+//         } mt-16 flex flex-col h-[80vh]`}
+//       >
 //         {!user ? (
 //           <div className="flex flex-col items-center gap-4">
-//             <p className={`text-md mb-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>Please log in to chat.</p>
+//             <p className={`text-md mb-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+//               Please log in to chat.
+//             </p>
 //             <button
 //               onClick={() => navigate("/login")}
-//               className={`px-4 py-2 rounded-full ${darkMode ? "bg-purple-700 hover:bg-purple-600 text-white" : "bg-purple-500 hover:bg-purple-400 text-white"}`}
+//               className={`px-4 py-2 rounded-full ${
+//                 darkMode
+//                   ? "bg-purple-700 hover:bg-purple-600 text-white"
+//                   : "bg-purple-500 hover:bg-purple-400 text-white"
+//               }`}
 //               data-tooltip-id="login-tooltip"
 //               data-tooltip-content="Go to Login Page"
 //             >
@@ -412,62 +432,99 @@
 //           <>
 //             <div className="flex-1 overflow-y-auto mb-4 p-4 rounded-lg flex flex-col gap-2">
 //               {loading ? (
-//                 <p className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Loading messages...</p>
+//                 <p className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                   Loading messages...
+//                 </p>
 //               ) : messages.length === 0 ? (
-//                 <p className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>No messages yet. Start the conversation!</p>
+//                 <p className={`text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                   No messages yet. Start the conversation!
+//                 </p>
 //               ) : (
 //                 groupedMessages().map((group, groupIndex) => (
 //                   <div key={groupIndex} className="mb-4">
-//                     <div className={`flex items-center justify-center my-2 text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
-//                       <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
+//                     <div
+//                       className={`flex items-center justify-center my-2 text-xs ${
+//                         darkMode ? "text-gray-400" : "text-gray-500"
+//                       }`}
+//                     >
+//                       <div
+//                         className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}
+//                       ></div>
 //                       <span className="px-3">{group.date}</span>
-//                       <div className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}></div>
+//                       <div
+//                         className={`flex-1 h-px ${darkMode ? "bg-gray-600" : "bg-gray-300"}`}
+//                       ></div>
 //                     </div>
 //                     {group.messages.map((msg) => (
 //                       <div
 //                         key={msg._id}
-//                         className={`flex relative ${msg.senderId === user.name ? "justify-end" : "justify-start"} mb-2 group`}
-//                         onContextMenu={(e) => { e.preventDefault(); toggleMenu(msg._id); }}
+//                         className={`flex relative ${
+//                           msg.senderId === user.name ? "justify-end" : "justify-start"
+//                         } mb-2 group`}
+//                         onContextMenu={(e) => {
+//                           e.preventDefault();
+//                           toggleMenu(msg._id);
+//                         }}
 //                         onTouchStart={() => handleTouchStart(msg._id)}
 //                         onTouchEnd={handleTouchEnd}
 //                       >
-//                         <div className={`max-w-[65%] p-2.5 rounded-xl overflow-wrap break-word word-break break-all white-space normal overflow-hidden ${msg.senderId === user.name ? (darkMode ? "bg-purple-600 text-white" : "bg-purple-300 text-gray-900") : (darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-300 text-gray-700")}`}>
+//                         <div
+//                           className={`max-w-[65%] p-2.5 rounded-xl overflow-wrap break-word word-break break-all white-space normal overflow-hidden ${
+//                             msg.senderId === user.name
+//                               ? darkMode
+//                                 ? "bg-purple-600 text-white"
+//                                 : "bg-purple-300 text-gray-900"
+//                               : darkMode
+//                               ? "bg-gray-700 text-gray-300"
+//                               : "bg-gray-300 text-gray-700"
+//                           }`}
+//                         >
 //                           {msg.replyTo && (
-//                             <div className={`text-xs italic mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"} border-l-2 pl-2 ${darkMode ? "border-gray-500" : "border-gray-400"}`}>
-//                               Replying to: {messages.find(m => m._id === msg.replyTo)?.text || "Deleted Message"}
+//                             <div
+//                               className={`text-xs italic mb-1 ${
+//                                 darkMode ? "text-gray-400" : "text-gray-500"
+//                               } border-l-2 pl-2 ${darkMode ? "border-gray-500" : "border-gray-400"}`}
+//                             >
+//                               Replying to:{" "}
+//                               {messages.find((m) => m._id === msg.replyTo)?.text ||
+//                                 "Deleted Message"}
 //                             </div>
 //                           )}
 //                           <span className="text-sm">{msg.text}</span>
-//                           <div className={`text-[10px] mt-0.5 ${msg.senderId === user.name ? "text-right" : "text-left"} ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                           <div
+//                             className={`text-[10px] mt-0.5 ${
+//                               msg.senderId === user.name ? "text-right" : "text-left"
+//                             } ${darkMode ? "text-gray-400" : "text-gray-500"}`}
+//                           >
 //                             {formatTimestamp(msg.timestamp)}
 //                             {msg.senderId === user.name && (
 //                               <span className="ml-1">
-//                                 {msg.seenAt ? <span className="text-blue-400">👀</span> : <span className="text-gray-400">sent</span>}
+//                                 {msg.seenAt ? (
+//                                   <span className="text-blue-400">👀</span>
+//                                 ) : (
+//                                   <span className="text-gray-400">sent</span>
+//                                 )}
 //                               </span>
 //                             )}
 //                           </div>
-//                           {msg.reactions && msg.reactions.length > 0 && (
-//                             <div className="flex flex-wrap gap-1 mt-1">
-//                               {msg.reactions.map((reaction, index) => (
-//                                 <span
-//                                   key={index}
-//                                   className={`text-xs px-1.5 py-0.5 rounded-full cursor-pointer ${reaction.userId === user.name ? "bg-blue-500/30" : "bg-gray-500/30"}`}
-//                                   onClick={() => reaction.userId === user.name && handleRemoveReaction(msg._id)}
-//                                   data-tooltip-id={`reaction-tooltip-${msg._id}-${index}`}
-//                                   data-tooltip-content={`${reaction.userId}: ${reaction.emoji}`}
-//                                 >
-//                                   {reaction.emoji}
-//                                   <Tooltip id={`reaction-tooltip-${msg._id}-${index}`} />
-//                                 </span>
-//                               ))}
-//                             </div>
-//                           )}
-//                           <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200 ${menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+//                           <div
+//                             className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${
+//                               msg.senderId === user.name ? "right-0" : "left-0"
+//                             } ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${
+//                               darkMode ? "border-gray-700" : "border-gray-300"
+//                             } transition-opacity duration-200 ${
+//                               menuOpen === msg._id ? "opacity-100 visible" : "opacity-0 invisible"
+//                             }`}
+//                           >
 //                             {msg.senderId === user.name && (
 //                               <>
 //                                 <button
-//                                   onClick={() => handleEditMessage(msg._id, prompt("Edit message:", msg.text))}
-//                                   className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-purple-700" : "bg-purple-200"} flex items-center gap-2`}
+//                                   onClick={() =>
+//                                     handleEditMessage(msg._id, prompt("Edit message:", msg.text))
+//                                   }
+//                                   className={`w-full text-left px-3 py-1.5 text-sm hover:${
+//                                     darkMode ? "bg-purple-700" : "bg-purple-200"
+//                                   } flex items-center gap-2`}
 //                                   data-tooltip-id={`edit-tooltip-${msg._id}`}
 //                                   data-tooltip-content="Edit Message"
 //                                 >
@@ -476,11 +533,22 @@
 //                                 <Tooltip id={`edit-tooltip-${msg._id}`} />
 //                                 <button
 //                                   onClick={() => handleDeleteMessage(msg._id)}
-//                                   className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-red-700" : "bg-red-200"} flex items-center gap-2`}
+//                                   className={`w-full text-left px-3 py-1.5 text-sm hover:${
+//                                     darkMode ? "bg-red-700" : "bg-red-200"
+//                                   } flex items-center gap-2`}
 //                                   data-tooltip-id={`delete-tooltip-${msg._id}`}
 //                                   data-tooltip-content="Delete Message"
 //                                 >
-//                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//                                   <svg
+//                                     width="12"
+//                                     height="12"
+//                                     viewBox="0 0 24 24"
+//                                     fill="none"
+//                                     stroke="currentColor"
+//                                     strokeWidth="2"
+//                                     strokeLinecap="round"
+//                                     strokeLinejoin="round"
+//                                   >
 //                                     <polyline points="3 6 5 6 21 6"></polyline>
 //                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
 //                                     <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -493,39 +561,28 @@
 //                             )}
 //                             <button
 //                               onClick={() => handleReply(msg)}
-//                               className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-blue-700" : "bg-blue-200"} flex items-center gap-2`}
+//                               className={`w-full text-left px-3 py-1.5 text-sm hover:${
+//                                 darkMode ? "bg-blue-700" : "bg-blue-200"
+//                               } flex items-center gap-2`}
 //                               data-tooltip-id={`reply-tooltip-${msg._id}`}
 //                               data-tooltip-content="Reply to Message"
 //                             >
-//                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+//                               <svg
+//                                 width="12"
+//                                 height="12"
+//                                 viewBox="0 0 24 24"
+//                                 fill="none"
+//                                 stroke="currentColor"
+//                                 strokeWidth="2"
+//                                 strokeLinecap="round"
+//                                 strokeLinejoin="round"
+//                               >
 //                                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
 //                               </svg>
 //                               Reply
 //                             </button>
 //                             <Tooltip id={`reply-tooltip-${msg._id}`} />
-//                             <button
-//                               onClick={() => toggleReactionMenu(msg._id)}
-//                               className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-green-700" : "bg-green-200"} flex items-center gap-2`}
-//                               data-tooltip-id={`reaction-menu-tooltip-${msg._id}`}
-//                               data-tooltip-content="Add Reaction"
-//                             >
-//                               <Smile size={12} /> React
-//                             </button>
-//                             <Tooltip id={`reaction-menu-tooltip-${msg._id}`} />
 //                           </div>
-//                           {reactionMenuOpen === msg._id && (
-//                             <div className={`absolute z-10 mt-2 w-32 rounded-lg shadow-lg ${msg.senderId === user.name ? "right-0" : "left-0"} ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"} border ${darkMode ? "border-gray-700" : "border-gray-300"} transition-opacity duration-200`}>
-//                               {["😊", "👍", "❤️", "😂", "😢"].map((emoji) => (
-//                                 <button
-//                                   key={emoji}
-//                                   onClick={() => handleAddReaction(msg._id, emoji)}
-//                                   className={`w-full text-left px-3 py-1.5 text-sm hover:${darkMode ? "bg-gray-700" : "bg-gray-200"}`}
-//                                 >
-//                                   {emoji}
-//                                 </button>
-//                               ))}
-//                             </div>
-//                           )}
 //                         </div>
 //                       </div>
 //                     ))}
@@ -533,7 +590,11 @@
 //                 ))
 //               )}
 //               {typing && (
-//                 <div className={`text-sm italic animate-pulse ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+//                 <div
+//                   className={`text-sm italic animate-pulse ${
+//                     darkMode ? "text-gray-400" : "text-gray-500"
+//                   }`}
+//                 >
 //                   {recipientId} is typing...
 //                 </div>
 //               )}
@@ -542,7 +603,11 @@
 
 //             <div className="flex gap-2 mt-auto">
 //               <textarea
-//                 placeholder={replyTo ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...` : "Type a message..."}
+//                 placeholder={
+//                   replyTo
+//                     ? `Replying to ${replyTo.senderId}: ${replyTo.text.slice(0, 20)}...`
+//                     : "Type a message..."
+//                 }
 //                 value={message}
 //                 onChange={handleTyping}
 //                 onKeyPress={(e) => {
@@ -551,12 +616,18 @@
 //                     handleSendMessage();
 //                   }
 //                 }}
-//                 className={`flex-1 p-3 rounded-lg border resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${darkMode ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400" : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"} focus:outline-none focus:ring-2 focus:ring-purple-500`}
+//                 className={`flex-1 p-3 rounded-lg border resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${
+//                   darkMode
+//                     ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
+//                     : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
+//                 } focus:outline-none focus:ring-2 focus:ring-purple-500`}
 //                 disabled={!user}
 //               />
 //               <button
 //                 onClick={handleSendMessage}
-//                 className={`p-3 rounded-full bg-purple-700 text-white hover:bg-purple-500 ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
+//                 className={`p-3 rounded-full bg-purple-700 text-white hover:bg-purple-500 ${
+//                   !user ? "opacity-50 cursor-not-allowed" : ""
+//                 }`}
 //                 disabled={!user}
 //                 data-tooltip-id="send-tooltip"
 //                 data-tooltip-content="Send Message"
@@ -570,7 +641,13 @@
 //       </div>
 
 //       {error && (
-//         <div className={`fixed top-20 right-6 p-4 rounded-lg shadow-lg max-w-sm ${darkMode ? "bg-red-800 text-red-300 border-red-700" : "bg-red-100 text-red-700 border-red-300"} border animate-slide-in`}>
+//         <div
+//           className={`fixed top-20 right-6 p-4 rounded-lg shadow-lg max-w-sm ${
+//             darkMode
+//               ? "bg-red-800 text-red-300 border-red-700"
+//               : "bg-red-100 text-red-700 border-red-300"
+//           } border animate-slide-in`}
+//         >
 //           <p>{error}</p>
 //         </div>
 //       )}
@@ -592,7 +669,6 @@
 // }
 
 // export default PrivateChatPage;
-
 
 
 import React, { useState, useEffect, useRef } from "react";
@@ -1198,7 +1274,7 @@ function PrivateChatPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="flex gap-2 mt-auto">
+            <div className="flex gap-2 mt-auto relative">
               <textarea
                 placeholder={
                   replyTo
@@ -1213,13 +1289,26 @@ function PrivateChatPage() {
                     handleSendMessage();
                   }
                 }}
-                className={`flex-1 p-3 rounded-lg border resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${
+                className={`flex-1 p-3 pr-10 rounded-lg border resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${
                   darkMode
                     ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
                     : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
                 } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                 disabled={!user}
               />
+              {replyTo && (
+                <button
+                  onClick={() => setReplyTo(null)}
+                  className={`absolute right-12 top-1/2 transform -translate-y-1/2 text-sm ${
+                    darkMode ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  data-tooltip-id="cancel-reply-tooltip"
+                  data-tooltip-content="Cancel Reply"
+                >
+                  ✕
+                </button>
+              )}
+              <Tooltip id="cancel-reply-tooltip" />
               <button
                 onClick={handleSendMessage}
                 className={`p-3 rounded-full bg-purple-700 text-white hover:bg-purple-500 ${
