@@ -627,4 +627,4 @@ function HomePage() {
   );
 }
 
-export default HomePage;
+export default homePage;
