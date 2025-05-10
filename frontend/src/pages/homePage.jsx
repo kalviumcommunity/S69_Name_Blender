@@ -489,11 +489,7 @@ function HomePage() {
         {user && (
           <button
             onClick={handleLogout}
-            className={`p-2 rounded-full ${
-              darkMode
-                ? "bg-[#00FF26] hover:bg-[#00CC1F] text-black"
-                : "bg-[#00FF26] hover:bg-[#00CC1F] text-black"
-            } transition-all`}
+            className={`p-2 rounded-full bg-[#00FF26] hover:bg-[#00CC1F] text-black transition-all`}
             data-tooltip-id="logout-tooltip"
             data-tooltip-content="Log Out"
           >
@@ -502,11 +498,7 @@ function HomePage() {
         )}
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`p-2 rounded-full ${
-            darkMode
-              ? "bg-[#00FF26] hover:bg-[#00CC1F] text-black"
-              : "bg-[#00FF26] hover:bg-[#00CC1F] text-black"
-          } transition-all`}
+          className={`p-2 rounded-full bg-[#00FF26] hover:bg-[#00CC1F] text-black transition-all`}
           data-tooltip-id="mode-tooltip"
           data-tooltip-content={
             darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
