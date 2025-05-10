@@ -358,7 +358,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
-import { RefreshCw, Share2, Moon, Sun, LogOut } from "lucide-react";
+import { RefreshCw, Share2, LogOut } from "lucide-react";
 
 function blendNames(name1, name2) {
   const half1 = name1.slice(0, Math.ceil(name1.length / 2));
@@ -446,24 +446,9 @@ function HomePage() {
   return (
     <div
       className={`${
-        darkMode
-          ? "bg-gradient-to-br from-gray-900 via-black to-gray-800"
-          : "bg-gradient-to-br from-white via-gray-100 to-gray-200"
-      } min-h-screen flex flex-col items-center justify-center p-6 transition-all duration-500 relative overflow-hidden`}
+        darkMode ? "bg-black" : "bg-gradient-to-br from-white via-gray-100 to-purple-100"
+      } min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden`}
     >
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className={`w-64 h-64 bg-[#00FF26] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse absolute ${
-            darkMode ? "top-10 left-10" : "top-20 right-20"
-          }`}
-        ></div>
-        <div
-          className={`w-96 h-96 bg-[#00FF26] rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse absolute ${
-            darkMode ? "bottom-20 right-20" : "bottom-10 left-10"
-          } delay-1000`}
-        ></div>
-      </div>
-
       {user && user.name && (
         <div className="fixed top-4 left-6 z-20">
           <span
@@ -471,16 +456,7 @@ function HomePage() {
               darkMode ? "text-gray-300" : "text-gray-700"
             }`}
           >
-            Hello🖐️{" "}
-            <span
-              className={`${
-                darkMode
-                  ? "animate-color-flow-dark hover:text-[#00FF26]"
-                  : "animate-color-flow-light hover:text-[#00FF26]"
-              } transition`}
-            >
-              {user.name}
-            </span>
+            Hello🖐️ <span className={`${darkMode ? "text-purple-300" : "text-purple-600"}`}>{user.name}</span>
           </span>
         </div>
       )}
@@ -489,7 +465,11 @@ function HomePage() {
         {user && (
           <button
             onClick={handleLogout}
-            className={`p-2 rounded-full bg-[#00FF26] hover:bg-[#00CC1F] text-black transition-all`}
+            className={`p-2 rounded-full ${
+              darkMode
+                ? "bg-green-500 hover:bg-green-600 text-white"
+                : "bg-purple-200 hover:bg-purple-300 text-gray-900"
+            }`}
             data-tooltip-id="logout-tooltip"
             data-tooltip-content="Log Out"
           >
@@ -498,7 +478,11 @@ function HomePage() {
         )}
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`p-2 rounded-full bg-[#00FF26] hover:bg-[#00CC1F] text-black transition-all`}
+          className={`p-2 rounded-full ${
+            darkMode
+              ? "bg-green-500 hover:bg-green-600 text-white"
+              : "bg-yellow-200 hover:bg-yellow-300 text-gray-900"
+          }`}
           data-tooltip-id="mode-tooltip"
           data-tooltip-content={
             darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
@@ -511,15 +495,15 @@ function HomePage() {
       </div>
 
       <div
-        className={`p-8 rounded-2xl shadow-xl w-full max-w-md text-center transition-all duration-300 backdrop-blur-md ${
+        className={`p-8 rounded-2xl shadow-xl w-full max-w-md text-center backdrop-blur-md ${
           darkMode
             ? "bg-gray-900 bg-opacity-30 border border-gray-700"
             : "bg-gray-200 bg-opacity-80 border border-gray-300"
         } relative z-10`}
       >
         <h1
-          className={`text-4xl font-bold mb-2 animate-fade-in ${
-            darkMode ? "text-white" : "text-black"
+          className={`text-4xl font-bold mb-2 ${
+            darkMode ? "text-white" : "text-gray-900"
           }`}
         >
           Name Blender
@@ -540,8 +524,8 @@ function HomePage() {
           className={`w-full mb-4 p-3 rounded-lg border ${
             darkMode
               ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
-              : "border-gray-300 bg-white text-black placeholder-gray-500"
-          } focus:outline-none focus:ring-2 focus:ring-[#00FF26] transition-all`}
+              : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
+          } focus:outline-none focus:ring-2 focus:ring-green-500`}
         />
 
         <input
@@ -552,25 +536,24 @@ function HomePage() {
           className={`w-full mb-4 p-3 rounded-lg border ${
             darkMode
               ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
-              : "border-gray-300 bg-white text-black placeholder-gray-500"
-          } focus:outline-none focus:ring-2 focus:ring-[#00FF26] transition-all`}
+              : "border-gray-300 bg-white text-gray-900 placeholder-gray-500"
+          } focus:outline-none focus:ring-2 focus:ring-green-500`}
         />
 
         <button
           onClick={handleBlend}
-          className={`w-full relative bg-[#00FF26] text-black font-bold py-3 rounded-full text-lg transition-all duration-300 overflow-hidden group hover:bg-[#00CC1F] mb-3`}
+          className={`w-full bg-green-500 text-white font-bold py-3 rounded-full text-lg hover:bg-green-600 mb-3`}
         >
-          <span className="relative z-10">🔮 Blend Names</span>
-          <span className="absolute inset-0 bg-[#00CC1F] opacity-0 group-hover:opacity-30 transition-opacity duration-300 transform -skew-x-12"></span>
+          🔮 Blend Names
         </button>
 
         <button
           onClick={handleReset}
           className={`flex items-center justify-center mx-auto gap-2 text-sm ${
             darkMode
-              ? "text-gray-300 hover:text-[#00FF26]"
-              : "text-gray-700 hover:text-[#00FF26]"
-          } transition`}
+              ? "text-gray-300 hover:text-green-300"
+              : "text-gray-700 hover:text-green-500"
+          }`}
         >
           <RefreshCw size={16} />
           Reset
@@ -585,21 +568,18 @@ function HomePage() {
                     ? "text-red-300"
                     : "text-red-500"
                   : darkMode
-                  ? "text-[#00FF26]"
-                  : "text-[#00FF26]"
-              } animate-fade-in`}
+                  ? "text-green-300"
+                  : "text-green-600"
+              }`}
             >
               💡 Result: <span className="underline">{blendedName}</span>
             </div>
             {!blendedName.includes("Please") && (
               <button
                 onClick={handleShare}
-                className={`mt-3 flex items-center justify-center mx-auto gap-2 relative bg-[#00FF26] text-black py-2 px-4 rounded-full text-sm transition-all duration-300 overflow-hidden group hover:bg-[#00CC1F]`}
+                className={`mt-3 flex items-center justify-center mx-auto gap-2 bg-green-500 text-white py-2 px-4 rounded-full text-sm hover:bg-green-600`}
               >
-                <span className="relative z-10">
-                  <Share2 size={16} className="inline mr-1" /> Share
-                </span>
-                <span className="absolute inset-0 bg-[#00CC1F] opacity-0 group-hover:opacity-30 transition-opacity duration-300 transform -skew-x-12"></span>
+                <Share2 size={16} className="inline mr-1" /> Share
               </button>
             )}
           </div>
@@ -607,12 +587,12 @@ function HomePage() {
 
         {shareMessage && (
           <p
-            className={`text-sm mt-2 animate-fade-in ${
+            className={`text-sm mt-2 ${
               shareMessage.includes("successfully") ||
               shareMessage.includes("Copied")
                 ? darkMode
-                  ? "text-[#00FF26]"
-                  : "text-[#00FF26]"
+                  ? "text-green-300"
+                  : "text-green-500"
                 : darkMode
                 ? "text-red-300"
                 : "text-red-500"
@@ -631,73 +611,18 @@ function HomePage() {
             to="/ChatPage"
             className={`underline ${
               darkMode
-                ? "text-[#00FF26] hover:text-[#00CC1F]"
-                : "text-[#00FF26] hover:text-[#00CC1F]"
+                ? "text-green-300 hover:text-green-400"
+                : "text-green-600 hover:text-green-800"
             }`}
           >
             <button
-              className={`w-full relative bg-[#00FF26] text-black font-bold py-3 rounded-full text-lg transition-all duration-300 overflow-hidden group hover:bg-[#00CC1F] mb-3`}
+              className={`w-full bg-green-500 text-white font-bold py-3 rounded-full text-lg hover:bg-green-600 mb-3`}
             >
-              <span className="relative z-10">Chat with Everyone</span>
-              <span className="absolute inset-0 bg-[#00CC1F] opacity-0 group-hover:opacity-30 transition-opacity duration-300 transform -skew-x-12"></span>
+              Chat with Everyone
             </button>
           </Link>
         </p>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes colorFlowDark {
-          0% {
-            color: #ffffff;
-          }
-          25% {
-            color: #00FF26;
-          }
-          50% {
-            color: #00CC1F;
-          }
-          75% {
-            color: #00FF26;
-          }
-          100% {
-            color: #ffffff;
-          }
-        }
-        .animate-color-flow-dark {
-          animation: colorFlowDark 6s infinite ease-in-out;
-        }
-        @keyframes colorFlowLight {
-          0% {
-            color: #000000;
-          }
-          25% {
-            color: #00FF26;
-          }
-          50% {
-            color: #00CC1F;
-          }
-          75% {
-            color: #00FF26;
-          }
-          100% {
-            color: #000000;
-          }
-        }
-        .animate-color-flow-light {
-          animation: colorFlowLight 6s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }
